@@ -1,0 +1,58 @@
+.orders
+{
+    padding: 20px;
+    height: 100%;
+
+
+}
+
+.order
+{
+    background-color: #FFF;
+    box-shadow: 2px 2px 5px #CCC;
+    float: left;
+    height: 300px;
+    width: 230px;
+    border: 1px solid #CCC;
+    border-right: 5px solid orange;
+    padding: 10px;
+    margin: 10px;
+    overflow: hidden;
+}
+
+.order .hostname
+{
+    display: none;
+}
+
+.order .changeOrder
+{
+    display: none;
+}
+
+.dark-button {
+    background: #222;
+    color: #fff;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    font-size: 30px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+  
+  .dark-button:hover {
+    background: #333;
+    transform: scale(1.05);
+  }
+  
+  .dark-button:active {
+    background: #444;
+    transform: scale(0.95);
+  }
+  
+  .dark-button:focus {
+    outline: 2px solid #555;
+  }

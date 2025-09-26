@@ -1,0 +1,1635 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100&family=Open+Sans:wght@300&display=swap');
+
+
+html, body
+
+{
+    font-family: 'Montserrat', sans-serif;
+    font-family: 'Open Sans', sans-serif;
+    background-color: #f5f5f5;
+    color: #000;
+    height: 100%;
+    margin: 0;
+    font-size: 20px;
+    color: #000;
+    overflow: hidden;
+
+}
+
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+
+.container
+{
+    display: flex;
+    justify-content: left;
+    flex-direction: row;
+    height: 100%;
+}
+
+
+.LeftBar
+{
+    box-shadow: 2px 2px 10px #000;
+    position: relative;
+    background-color:#28282B;
+    width: 200px;
+    height: 100%;
+    min-height: 100%;
+    padding: 5px;
+}
+
+.menuButton a
+{
+    color: inherit;
+}
+
+.LeftBar .menuButton
+{
+    color: #89898d;
+    width: 100%;
+    float: left;
+    padding: 13px;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.timerWorker
+{
+    background-color: rgb(24, 22, 22);
+    border-radius: 3px;
+    margin-top: 15px;
+}
+
+.LeftBar .menuButton:hover
+{
+    background-color: rgb(24, 22, 22);
+}
+
+.LeftBar .profilepic
+{
+    margin: auto;
+    width: 100px;
+    height: 100px;
+    overflow: hidden;
+}
+
+.profilepic .pic 
+{
+    width: inherit;
+    height: inherit;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #424244;
+}
+
+
+.LeftBar .username
+{
+    color: #FFF;
+    margin: 10px 0 10px;
+    width: 100%;
+    float: left;
+    font-size: 20px;
+    text-align: center;
+
+}
+
+.LeftBar .userinfo
+{
+    border-bottom: 1px solid #3f3f3f;
+    float: left;
+    width: 100%;
+    margin: 10px 0 20px;
+
+}
+
+.LeftBar .userinfo .pm
+{
+    cursor: pointer;
+    background-color: rgb(24, 22, 22);
+    width: 100%;
+    padding: 5px;
+    border-radius: 4px;
+    color: #FFF;
+    font-size: 17px;
+
+}
+
+.LeftBar .userinfo .pm span
+{
+    margin-top: 5px;
+    float: left;
+    
+}
+
+.LeftBar .userinfo .pm a
+{
+    text-decoration: none;
+    color: #FFF;
+}
+
+.LeftBar .userinfo .pmIcon
+{
+    background: url('../images/icons/timer.png') no-repeat center center;
+    background-size: cover;
+    height: 30px;
+    width: 30px;
+    float: left;
+    margin-right: 10px;
+
+ 
+}
+
+.LeftBar .userinfo .paid
+{
+    border-radius: 20px;
+    background: url('../images/icons/coin-us-dollar-icon.png') no-repeat center center !important;
+}
+
+.LeftBar .userinfo .attested
+{
+    border-radius: 20px;
+    background: url('../images/icons/attest.png') no-repeat center center !important;
+}
+
+
+.modal
+{
+    background-color: rgba(0, 0, 0, 0.7);
+    position: fixed;
+    z-index: 4;
+    top: 0;
+    bottom:0;
+    right: 0;
+    left:0;
+    display: none;
+}
+
+.modalFocus
+{
+    background-color: rgba(0, 0, 0, 0.7);
+    position: fixed;
+    z-index: 3;
+    top: 0;
+    bottom:0;
+    right: 0;
+    left:0;
+    display: none;
+}
+
+
+
+.clear
+{
+    clear: both;
+}
+
+
+
+
+
+.timeForm
+{
+    display: none;
+    width: 800px;
+    margin: auto;
+    margin-top: 150px;
+    color: #FFF;
+}
+
+.timeForm .fields
+{
+    width: 100%;
+}
+
+.timeForm input[type="number"]
+
+{
+
+    margin-bottom: 30px;
+    text-align: center;
+
+}
+
+
+
+.timeForm textarea, .timeForm input[type="number"]
+
+{
+
+    border-radius: 10px;
+    font-size: 20px;
+    width: 100px;
+    padding: 10px;
+    border: none;
+    outline: none;
+}
+
+
+
+.timeForm textarea
+
+{
+    margin-top: 10px;
+    width: 300px;
+    min-width: 500px;
+    height: 150px;
+    resize: none;
+}
+
+
+
+.timeForm input[type="submit"]
+{
+    background-color: #3692e2;
+    border: none;
+    color: #FFF;
+    padding: 10px;
+    cursor: pointer;
+    float: right;
+    margin-top: 10px;
+    margin-left: 10px;
+
+}
+
+
+
+.timeForm .close 
+{
+    background-color: #e23636 !important;
+}
+
+
+
+*
+{
+    box-sizing: border-box;
+}
+
+
+
+h1, h5
+{
+    margin: 0;
+}
+
+
+
+.column
+
+{
+
+    float: right;
+
+}
+
+
+
+main
+
+{
+    max-width: 1350px;
+    margin: auto;
+    padding-top: 30px;
+}
+
+
+
+
+
+#Menu
+
+{
+
+    background-color: #4d4d4d;
+
+    height: 100%;
+
+    width: 300px;
+
+    border-right: 1px solid #000;
+
+    box-shadow: 2px 0px 10px #000;
+
+    position: fixed;
+
+    display: none;
+
+    z-index: 4;
+
+    right:0;
+
+
+
+    
+
+}
+
+
+
+
+
+#Menu #top
+
+{
+
+    padding: 10px;
+
+}
+
+
+
+#Menu #top .close
+
+{
+
+    background: url('../images/closeMenu.png')no-repeat;
+
+    float: right;
+
+    width: 50px;
+
+    height: 50px;
+
+    border-radius: 50px;
+
+    border: none;
+
+    cursor: pointer;
+
+    opacity: 0.5;
+
+}
+
+
+
+#Menu #top .close:hover
+
+{
+
+    opacity: 1;
+
+}
+
+
+
+#Menu section a
+
+{
+
+    width: 90%;
+
+    float: left;
+
+    display: block;
+
+    color: #CCC;
+
+    text-decoration: none;
+
+    margin-left: 15px;
+
+    padding: 3px;
+
+    opacity: 0.7;
+
+}
+
+
+
+#Menu section a:hover
+
+{
+
+   
+
+    opacity: 1;
+
+}
+
+
+
+hr 
+
+{
+
+    border: none;
+
+    padding: 5px;
+
+}
+
+
+.blip
+{
+
+    width: 23px;
+    height: 23px;
+    float: left;
+    margin-top: 6px;
+    margin-right: 10px;
+    border-radius: 50%;
+    color: #FFF;
+    text-align: center;
+   
+}
+
+.blip span
+{
+    font-size: 13px;
+    margin-top: 2px;
+    float: left;
+    width: 100%;
+
+}
+
+
+ .orange
+
+{
+    background-color: orange;
+    box-shadow: 0px 0px 8px orange;
+    
+}
+
+
+ .green
+
+{
+    background-color: #65c067;
+    box-shadow: 0px 0px 8px #74f976;
+}
+
+
+
+ .red
+
+{
+    background-color: red;
+    box-shadow: 0px 0px 8px red;
+}
+
+
+
+
+
+ .purple
+
+{
+    background-color: purple;
+    box-shadow: 0px 0px 8px purple;
+}
+
+
+
+
+
+ .aqua
+
+{
+    background-color: #0f5a57;
+    box-shadow: 0px 0px 8px #0f5a57;
+}
+
+
+
+
+
+
+
+
+
+@media screen and (max-width: 1307px) 
+
+{
+
+   #navArea
+   {    
+        width: 100%;
+   }
+
+   #Menu 
+
+   {
+
+    width: 100%;
+
+   }
+
+
+
+   .badge
+
+   {
+
+        width: 100%;
+
+        margin:none;
+
+        border-radius: 0 !important;
+
+   }
+
+
+
+   #header
+
+   {
+
+    margin-bottom: 10px;
+
+    padding: 10px;
+
+   }
+
+}
+
+
+
+ .userInfo
+
+{
+
+    float: right;
+    color: #FFF;
+    margin-left: 4px;
+
+}
+
+
+
+#header h5
+
+{
+
+    color: #FFF;
+    border-radius: 4px;
+    float: left;
+    width: 100%;
+    text-decoration: underline;
+    margin-right: 30px;
+    text-shadow: 2px 2px 10px #000;
+}
+
+
+
+#header
+
+{
+
+    background: url(../images/backgrounds/login.png)no-repeat;
+    box-shadow: 2px 2px 2px #CCC;
+    position: fixed;
+    left: 0;
+    right:0;
+    z-index: 1;
+    padding: 6px;
+
+}
+
+
+
+.openMenu
+
+{
+
+    background: url('../images/icons/dropdown.png')no-repeat;
+    background-position: center;
+    float: right;
+    width: 30px;
+    height: 30px;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+    background-color: #3097f0;
+    border-radius: 4px;
+    margin-top: 2px;
+
+}
+
+
+
+ .addOrder
+
+{
+    margin: 5px 0 15px;
+    width: 100%;
+    padding: 10px;
+    float: left;
+    font-size: 20px;
+    border-radius: 3px;
+    border: none;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    background-color: rgb(58, 172, 58);
+    border: 1px solid rgb(58, 172, 58);
+    color: #fff;
+    cursor: pointer;
+    text-align: center;
+    
+}
+
+.addOrder:hover
+{
+    box-shadow: 2px 2px 10px #000;
+}
+
+
+
+
+#parentStats
+
+{
+    border-radius: 3px 3px 0 0;
+    background-color: rgb(24, 22, 22);
+    float: left;
+    margin-bottom: 10px;
+    width:  100%;
+}
+
+#navArea
+{
+    float: right;
+    width: 75%;
+}
+
+.badge
+
+{
+    width: 100%;
+    float: left;
+    padding: 10px;
+    margin-right: 3px;
+    color: #89898d;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    text-transform: uppercase !important;
+}
+
+.badge label 
+{
+    float: left;
+    margin-top: 8px;
+
+}
+
+.badge:hover
+{
+    background-color: rgb(38, 118, 189);
+    color: rgb(92, 170, 238);
+}
+
+.badge:last-child
+{
+    margin: none;
+}
+
+.active
+{
+    background-color: #FFF !important;
+    color: #000;
+    width: 100%;
+}
+
+
+
+
+
+/* Order article */
+
+.filterOrders
+{
+    margin-bottom: 10px;
+    padding: 10px;
+    float: left;
+    border: 1px solid #3f3f3f;
+    width: 100%;
+}
+
+.searchField
+{
+    float: left;
+  
+}
+.filterOrders .searchOrder
+{
+    background: none;
+    float: left;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    margin-top: 5px;
+    width: 100px;
+    padding-right: 3px;
+    color: #FFF;
+
+}
+
+
+
+.results
+{
+    float: left;
+    width: 100%;
+    text-align: center;
+    color: #1d86e2;
+}
+
+.searchicon
+{
+
+    float: left;
+    width: 30px;
+    margin-right: 15px;
+    margin-left: 5px;
+    background-color: #585858;
+    padding: 5px;
+    border-radius: 50%;
+}
+
+.filterOrders .recycle
+{
+    background: url('../images/icons/papperskorg.png') no-repeat center center;
+    background-size: cover;
+    width: 30px;
+    height: 30px;
+    float: right;
+    border: none;
+    cursor: pointer;
+    opacity: 0.3;
+    margin-top: 1px;
+    margin-right: 10px;
+}
+
+.filterOrders .recycle:hover
+{
+    opacity: 1;
+}
+
+.filterOrders .active 
+{
+   opacity: 1;
+}
+
+.reworkMsg
+{
+    padding: 5px;
+    float: left;
+    background-color: rgb(255, 223, 223);
+}
+
+#orderArea
+{
+    
+    flex-direction: column;
+}
+
+#orderArea .noArticle
+{
+    padding: 10px;
+}
+
+
+.orders
+{
+    padding: 20px;
+    flex: 1;
+    height: 100%;
+    overflow-y: scroll;
+}
+
+.order
+{
+    background-color: #FFF;
+    box-shadow: 2px 2px 5px #CCC;
+    float: left;
+    width: 100%;
+    min-width: 382px;
+    clear: right;
+    border: 1px solid #CCC;
+    border-right: 5px solid orange;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.order .orderId
+{
+    margin-right: 10px;
+}
+
+
+.order .icon
+{
+    width: 20px;
+    margin-right: 4px;
+    margin-left: 10px;
+    position: relative;
+    top: 3px;
+}
+
+.order .icon:last-child
+{
+    margin-left: 0;
+}
+
+
+
+
+
+.order .asap
+
+{
+
+    background-color: rgb(255, 223, 223);
+
+    padding: 5px;
+
+    color: red;
+
+    float: right;
+
+    border-radius: 5px;
+
+    margin-right: 10px;
+
+    font-size: 15px;
+
+}
+
+
+.completed
+{
+    float: right;
+    background: url('../images/icons/completed.png') no-repeat center center;
+    background-size: cover;
+    height: 40px;
+    width: 40px;
+}
+
+
+.order .order_desc
+
+{
+    border-bottom: 1px dashed #CCC;
+    float: left;
+    max-width: 800px;
+    margin-bottom: 5px;
+}
+
+
+ .focusOnOrder
+{
+    float: left;
+    width: 100%;
+    margin-top: 2px;
+    background-color: #fff;
+    opacity: 1;
+}
+
+.focusOnOrder:hover
+{
+    opacity: 0.6;
+}
+
+
+.order_desc .name 
+
+{
+
+
+
+    border-radius: 5px;
+
+    padding: 5px;
+
+    color:#000;
+
+    float: left;
+
+
+
+}
+
+
+
+.order_desc .hostname 
+
+{
+
+    padding: 5px;
+
+    float: left;
+
+    margin-left: 10px;
+
+    color: #FFF !important;
+
+}
+
+
+
+ .date
+
+{
+    margin: 0;
+    margin-left: 10px;
+    float: left;
+    font-size: 14px;
+    margin-top: 3px;
+}
+
+
+.orderFocus
+{
+    position: fixed !important;
+    overflow-y: scroll !important;
+    top: 20px !important;
+    left: 20% !important;
+    max-width: 1200px !important;
+    min-height: 300px !important;
+    max-height: 890px !important;
+    box-shadow: 0 0 0 0 !important;
+    z-index: 4 !important;
+}
+
+.order .stat
+
+{
+
+    display: none;
+
+}
+
+.order .stat button 
+
+{
+
+    background-color: #28a745;
+
+    color: #FFF;
+
+    border: none;
+
+    padding: 10px;
+
+    border-radius: 4px;
+
+    cursor: pointer;
+
+}
+
+
+
+.order .stat button:hover
+
+{
+
+    background-color: #098325;
+
+}
+
+
+
+.order .stat
+
+{
+
+    width: 100%;
+
+    float: left;
+
+}
+
+
+
+.order .orderButtons
+
+{
+
+    float: right;
+
+}
+
+
+
+.order .changeOrder
+
+{
+
+    position: relative;
+
+    font-size: 15px;
+
+    padding: 5px;
+
+    float: right;
+
+    background: linear-gradient(#1d86e2, #0f61a9);
+
+    color: #FFF;
+
+    border: none;
+
+    border-radius: 5px;
+
+    cursor: pointer;
+
+    width: 50px;
+
+    height: 30px;
+
+    text-align: center;
+
+}
+
+
+
+
+
+.order .changeOrder .orderHandler
+
+{
+
+    padding: 10px;
+
+    position: absolute;
+
+    border: 1px solid #CCC;
+
+    background-color: #FFF;
+
+    top: 29px;
+
+    right: -1px;
+
+    display: none;
+
+    width: 150px;
+
+    border-radius: 0 0 5px 5px;
+
+    z-index: 2;
+
+    
+
+}
+
+
+
+.order .changeOrder:hover
+
+{
+
+    border-radius: 5px 5px 0 0;
+
+    background: #FFF !important;
+
+    border: 1px solid #CCC;
+
+    color: #000;
+
+    border-bottom: none;
+
+}
+
+
+
+.orderHandler button
+
+{
+
+    cursor: pointer;
+
+    margin-top: 5px;
+
+}
+
+
+
+
+
+.order .changeOrder:hover > .orderHandler
+
+{
+
+    display: block !important;
+
+}
+
+
+
+.changeOrder button 
+
+{
+
+    padding: 10px;
+
+    border-radius: 4px;
+
+    color: #FFF;
+
+    border: none;
+
+    width: 100%;
+
+    float: left;
+
+}
+
+
+
+
+
+.orderHandler .delete
+
+{
+    background-color: #a72828;
+
+}
+
+
+
+.changeOrder .delete:hover
+
+{
+
+    background-color: #ce4040;
+
+}
+
+
+
+.orderHandler .done
+
+{
+
+    background-color: #a72859;
+
+}
+
+
+
+.orderHandler .done:hover
+
+{
+
+    background-color: #cc3d74;
+
+}
+
+
+
+.orderHandler .change
+
+{
+
+    background-color: rgb(218, 155, 40);
+
+}
+
+
+
+.orderHandler .change:hover
+
+{
+
+    background-color: rgb(252, 194, 87);
+
+}
+
+
+
+.orderHandler .acceptOrder
+
+{
+
+    background-color: rgb(19, 180, 33);
+
+}
+
+
+
+.orderHandler .acceptOrder:hover
+
+{
+
+    background-color: rgb(50, 211, 63);
+
+}
+
+
+
+.orderHandler .denyOrder
+
+{
+
+    background-color: rgb(218, 40, 49);
+
+}
+
+
+
+.orderHandler .denyOrder:hover
+
+{
+
+    background-color: rgb(238, 63, 71);
+
+}
+
+
+.order .Restore
+{
+    float: right;
+    background-color: #0d8826;
+    padding: 10px;
+    border-radius: 5px;
+    color: #FFF;
+    border: none;
+    cursor: pointer;
+}
+
+.order .Restore:hover
+{
+    background-color: #26b943;
+}
+
+.Steps
+
+{
+
+    margin-top: 30px;
+
+    width: 100%;
+
+    float: left;
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+
+
+  
+
+
+
+.step
+
+{
+
+
+
+    display: flex;
+
+    flex-direction: row;
+
+}
+
+
+
+.stepValue
+
+{
+
+    font-size: 18px;
+
+    margin-left: 10px;
+
+}
+
+
+
+.Steps input[type="checkbox"]
+
+{
+
+    width: 20px;
+
+    height: 20px;
+
+    cursor: pointer;
+
+}
+
+.descEdit
+
+{
+    width: 100%;
+    height: 100px;
+    background-color: #f8f8f8;
+    margin-top: 20px;
+    padding: 5px;
+}
+
+
+
+.content
+
+{
+
+    display: none;
+    width: 600px;
+
+}
+
+
+.masked{
+  background: white;
+  z-index: 1;
+  position:relative;
+}
+
+.masked:after {
+  content: "";
+  position: absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height: 100%;
+  z-index: 2;
+  background: -webkit-linear-gradient(rgba(255,255,255,0) 0%, rgba(255,255,255,1) 70%);
+  background: -moz-linear-gradient(rgba(255,255,255,0) 0%, rgba(255,255,255,1) 70%);
+  background: -o-linear-gradient(rgba(255,255,255,0) 0%, rgba(255,255,255,1) 70%);
+  background: linear-gradient(rgba(255,255,255,0) 0%, rgba(255,255,255,1) 70%);
+
+}
+
+
+.desc
+
+{
+    position: relative;
+    float: left;
+    width: 100%;
+    overflow: hidden;
+    height: 100px;
+
+}
+
+
+
+.showText
+{
+    float: left;
+    width: 100%;
+    display: block;
+
+    height: 40px;
+
+}
+
+.autoHeight
+{
+    height: auto !important;
+}
+
+.showText .readMore
+{
+    background: url('../images/icons/readmore.png') no-repeat center center;
+    background-size: cover;
+    border: none;
+    width: 50px;
+    height: 50px;
+    opacity: 0.6;
+    display: block;
+    margin: auto;
+    cursor: pointer;
+}
+
+.rotate
+{
+    transform: rotate(180deg);
+}
+
+.imagesArea
+
+{
+
+    float: left;
+
+    width: 100%;
+
+}
+
+
+.galleryImage
+{
+    width: 100%;
+}
+.imageHolder
+{
+
+    height: 600px;
+    width: 800px;
+    margin: auto;
+    margin-top: 30px;
+    overflow-y: scroll;
+    clear: both;
+}
+
+.close
+{
+    width: 800px;
+    margin: auto;
+    margin-top: 30px;
+    padding-bottom: 20px;
+
+}
+
+.close button
+{
+    background-color: #ef3838;
+    padding: 10px;
+    color: #FFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    float: right;
+    width: 60px;
+}
+
+.close button:hover
+{
+    background-color: #fc5c5c;
+}
+
+
+.order input[type="text"]
+
+{
+
+    display: none;
+
+    float: left;
+
+    padding: 5px;
+
+    border: 1px solid #3097f0;
+
+    border-radius: 5px;
+
+    margin-bottom: 10px;
+
+    font-size: 20px;
+
+    width: 100%;
+
+}
+
+
+
+
+
+
+
+
+
+#imgArea
+
+{
+    width: 100%;
+    float: left;
+}
+
+#imgArea .icon
+{
+    width: 30px;
+    float: left;
+    margin-left: 8px;
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+
+#imgArea .icon:hover
+{
+    box-shadow: 2px 2px 10px #CCC;
+}
+
+.img
+{
+    width: 100%;
+    float: left;
+    object-fit: cover;
+}
+
+.infoUser
+{
+    color: #FFF;
+    font-weight: bold;
+    background-color: #398ed8;
+    padding: 4px;
+}
+
+.infoUser span
+{
+    float: left;
+    display: block;
+    text-align: center;
+    margin-left: 10px;
+}
+
+.infoUser button
+{
+    background-color: #f24a4a;
+    border: none;
+    color: #FFF;
+    float: right;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.infoUser button:hover
+{
+    background-color: #f16868;
+}
+
+.timeWorked
+{
+    border: none;
+    margin-top: 15px;
+    float: left;
+    box-sizing: border-box;
+    bottom: 0;
+    width: 100%;
+    overflow: hidden;
+
+}
+
+ .timeWorked span
+{
+    background-color: #1d1d1d;
+    padding: 15px 0;
+    height: 100px;
+    width: 50%;
+    color: #6b6b6b;
+    font-size: 10px;
+    float: left;
+    font-weight: bold;
+    text-align: center;
+    box-sizing: inherit;
+    overflow: hidden;
+}
+
+
+.timeWorked span:first-child
+{
+    border-right: 2px solid #28282B;
+}
+
+ .timeWorked span h1
+{
+    margin-top: 15px;
+    line-height: 10px;
+}
+
+.timeWorked p 
+{
+   
+    font-size: 13px;
+}
+
+
+
+
+.latestLogin
+{
+    float: left;
+    width: 100%;
+    margin-top: 20px;
+    color: #FFF;
+    font-size: 14px;
+}
+
+.latestLogin h5
+{
+    margin:0;
+    padding: 3px;
+    float: left;
+    font-size: 16px;
+    text-decoration: underline;
+   
+}
+
+.latestLogin .window
+{
+    width: 100%;
+    float: left;
+    padding: 10px 21px 20px;
+    
+}
+
+
+.workflow
+{
+  width: 100%;
+  height: 300px;
+  padding: 10px;
+}

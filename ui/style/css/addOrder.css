@@ -1,0 +1,1209 @@
+body
+
+{
+
+    font-family: sans-serif;
+    margin: 0;
+    color: #FFF;
+}
+
+
+
+/*general*/
+
+
+
+select
+
+{
+
+    cursor: pointer;
+
+}
+
+
+
+::-webkit-scrollbar {
+
+    width: 15px;
+
+    height: 15px;
+
+}
+
+::-webkit-scrollbar-corner {
+
+    background-image: url(https://i.stack.imgur.com/FguQn.png?corner.png);
+
+    background-repeat: no-repeat;
+
+}
+
+::-webkit-resizer {
+
+    background-image: url(https://i.stack.imgur.com/aKKDY.png?resizer.png);
+
+    background-repeat: no-repeat;
+
+    background-position: bottom right;
+
+}
+
+::-webkit-scrollbar-button:start {
+
+    display: none;
+
+}
+
+::-webkit-scrollbar-button:end {
+
+    display: block;
+
+}
+
+::-webkit-scrollbar:horizontal {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/NQ2K6.png?horizontal-button.png) 0 2 0 2;
+
+    border-color: transparent;
+
+    border-width: 0 2px;
+
+    background-image: url(https://i.stack.imgur.com/8xDbU.png?horizontal-button-background.png);
+
+    background-repeat: repeat-x;
+
+}
+
+::-webkit-scrollbar:horizontal:corner-present {
+
+    border-right-width: 0;
+
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/YQRD7.png?horizontal-thumb.png) 0 15 0 15;
+
+    border-color: transparent;
+
+    border-width: 0 15px;
+
+    min-width: 20px;
+
+}
+
+::-webkit-scrollbar-track-piece:horizontal:start {
+
+    margin-left: 6px;
+
+}
+
+::-webkit-scrollbar-track-piece:horizontal:end {
+
+    margin-right: -6px;
+
+}
+
+::-webkit-scrollbar-track-piece:horizontal:decrement {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/p9yMk.png?horizontal-track.png) 0 15 0 15;
+
+    border-color: transparent;
+
+    border-width: 0 0 0 15px;
+
+}
+
+::-webkit-scrollbar-track-piece:horizontal:increment {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/p9yMk.png?horizontal-track.png) 0 15 0 15;
+
+    border-color: transparent;
+
+    border-width: 0 15px 0 0;
+
+}
+
+::-webkit-scrollbar-button:horizontal {
+
+    width: 21px;
+
+    -webkit-border-image: url(https://i.stack.imgur.com/NQ2K6.png?horizontal-button.png) 0 2 0 2;
+
+    border-color: transparent;
+
+    border-width: 0 2px;
+
+}
+
+::-webkit-scrollbar-button:horizontal:decrement {
+
+    background-image: url(https://i.stack.imgur.com/dGOKL.png?horizontal-decrement-arrow.png), url(https://i.stack.imgur.com/8xDbU.png?horizontal-button-background.png);
+
+    background-repeat: no-repeat, repeat-x;
+
+    background-position: 7px 4px, 0 0;
+
+}
+
+::-webkit-scrollbar-button:horizontal:decrement:active {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/gT5BM.png?horizontal-button-active.png) 0 2 0 2;
+
+    background-image: url(https://i.stack.imgur.com/dGOKL.png?horizontal-decrement-arrow.png), url(https://i.stack.imgur.com/RDf8L.png?horizontal-button-background-active.png);
+
+}
+
+::-webkit-scrollbar-button:horizontal:increment {
+
+    background-image: url(https://i.stack.imgur.com/5rJr5.png?horizontal-increment-arrow.png), url(https://i.stack.imgur.com/8xDbU.png?horizontal-button-background.png);
+
+    background-repeat: no-repeat, repeat-x;
+
+    width: 16px;
+
+    border-left-width: 0;
+
+    background-position: 3px 4px, 0 0;
+
+}
+
+::-webkit-scrollbar-button:horizontal:increment:active {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/gT5BM.png?horizontal-button-active.png) 0 2 0 2;
+
+    background-image: url(https://i.stack.imgur.com/5rJr5.png?horizontal-increment-arrow.png), url(https://i.stack.imgur.com/RDf8L.png?horizontal-button-background-active.png);
+
+}
+
+::-webkit-scrollbar-button:horizontal:end:increment:corner-present {
+
+    border-right-width: 0;
+
+    width: 15px;
+
+}
+
+::-webkit-scrollbar:vertical {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/NdaTT.png?vertical-button.png) 2 0 2 0;
+
+    border-color: transparent;
+
+    border-width: 2px 0;
+
+    background-image: url(https://i.stack.imgur.com/p7j9a.png?vertical-button-background.png);
+
+    background-repeat: repeat-y;
+
+}
+
+::-webkit-scrollbar:vertical:corner-present {
+
+    border-bottom-width: 0;
+
+}
+
+::-webkit-scrollbar-thumb:vertical {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/rPEsZ.png?vertical-thumb.png) 15 0 15 0;
+
+    border-color: transparent;
+
+    border-width: 15px 0;
+
+    min-height: 20px;
+
+}
+
+::-webkit-scrollbar-track-piece:vertical:start {
+
+    margin-top: 6px;
+
+}
+
+::-webkit-scrollbar-track-piece:vertical:end {
+
+    margin-bottom: -6px;
+
+}
+
+::-webkit-scrollbar-track-piece:vertical:decrement {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/Rb6ru.png?vertical-track.png) 15 0 15 0;
+
+    border-color: transparent;
+
+    border-width: 15px 0 0 0;
+
+}
+
+::-webkit-scrollbar-track-piece:vertical:increment {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/Rb6ru.png?vertical-track.png) 15 0 15 0;
+
+    border-color: transparent;
+
+    border-width: 0 0 15px 0;
+
+}
+
+::-webkit-scrollbar-button:vertical {
+
+    height: 21px;
+
+    -webkit-border-image: url(https://i.stack.imgur.com/NdaTT.png?vertical-button.png) 2 0 2 0;
+
+    border-color: transparent;
+
+    border-width: 2px 0;
+
+}
+
+::-webkit-scrollbar-button:vertical:decrement {
+
+    background-image: url(https://i.stack.imgur.com/KQvwk.png?vertical-decrement-arrow.png), url(https://i.stack.imgur.com/p7j9a.png?vertical-button-background.png);
+
+    background-repeat: no-repeat, repeat-y;
+
+    background-position: 4px 7px, 0 0;
+
+}
+
+::-webkit-scrollbar-button:vertical:decrement:active {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/uW3TL.png?vertical-button-active.png) 2 0 2 0;
+
+    background-image: url(https://i.stack.imgur.com/KQvwk.png?vertical-decrement-arrow.png), url(https://i.stack.imgur.com/puDsH.png?vertical-button-background-active.png);
+
+}
+
+::-webkit-scrollbar-button:vertical:increment {
+
+    background-image: url(https://i.stack.imgur.com/UjkVR.png?vertical-increment-arrow.png), url(https://i.stack.imgur.com/p7j9a.png?vertical-button-background.png);
+
+    background-repeat: no-repeat, repeat-y;
+
+    height: 16px;
+
+    border-top-width: 0;
+
+    background-position: 4px 5px, 0 0;
+
+}
+
+::-webkit-scrollbar-button:vertical:increment:active {
+
+    -webkit-border-image: url(https://i.stack.imgur.com/uW3TL.png?vertical-button-active.png) 2 0 2 0;
+
+    background-image: url(https://i.stack.imgur.com/UjkVR.png?vertical-increment-arrow.png), url(https://i.stack.imgur.com/puDsH.png?vertical-button-background-active.png);
+
+}
+
+::-webkit-scrollbar-button:vertical:end:increment:corner-present {
+
+    border-bottom-width: 0;
+
+    height: 15px;
+
+}
+
+::-webkit-scrollbar:disabled {
+
+    background: red;
+
+    -webkit-border-image: none;
+
+    display: none;
+
+}
+
+
+
+form
+
+{
+
+    width: auto;
+
+}
+
+
+
+*
+
+{
+
+    box-sizing: border-box;
+
+}
+
+
+
+main
+
+{
+
+    margin: auto;
+
+    max-width: 1600px;
+
+    min-width: 1300px;
+
+    margin-bottom: 20px;
+
+}
+
+
+
+.clear
+
+{
+
+    clear:both;
+
+}
+
+.header
+{
+    float: left;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.header button 
+{
+    background-color: #4593d7;
+    border: none;
+    color: #FFF;
+    padding: 10px;
+    margin-left: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    float: left;
+}
+
+#header
+
+{
+
+    max-width: 1600px;
+
+    margin: auto;
+
+    padding: 3px;
+
+    margin-bottom: 10px;
+
+    margin-top: 10px;
+
+}
+
+
+
+#header select
+
+{
+
+    float: right;
+
+    margin-right: 10px;
+
+    font-size: 20px;
+
+    margin: 0;
+
+}
+
+
+
+#header button
+
+{
+
+    background-color: #4593d7;
+
+    float: right;
+
+    color: #FFF;
+
+    border-radius: 4px;
+
+    padding: 10px;
+
+    border: none;
+
+    font-size: 20px;
+
+    cursor: pointer;
+
+    margin-left: 10px;
+
+}
+
+
+
+#header .closeOrder
+
+{
+
+    background-color: #d74545;
+
+}
+
+
+
+#header .saveOrder:hover
+
+{
+
+    background-color: #6cb6f7;
+
+}
+
+
+
+#header .closeOrder:hover
+
+{
+
+    background-color: #f05e5e;
+
+}
+
+
+
+#header .devName
+
+{
+
+    padding: 9px;
+
+    background: none;
+
+    color: #000;
+
+    border: 1px solid #CCC;
+
+}
+
+
+
+#orderArea
+
+{
+
+    background-color: #7f279c;
+
+    opacity: 0.8;
+
+    float: left;
+
+    padding: 20px;
+
+    width: 787px;   
+
+    box-shadow: 2px 2px 10px #000;
+
+    margin-top: 10px;
+
+    min-height: 600px;
+
+    margin-right: 10px;
+
+    border-radius: 10px;
+
+
+
+}
+
+
+
+#imageArea
+
+{
+
+    float: left;
+
+}
+
+
+
+
+
+::placeholder {
+
+    color: #FFF;
+
+    opacity: 1; /* Firefox */
+
+  }
+
+  
+
+  ::-ms-input-placeholder { /* Edge 12 -18 */
+
+    color: #FFF;
+
+  }
+
+
+
+
+
+#orderArea .checkbox
+
+{
+
+    width: 400px;
+
+    float: left;
+
+    color: #FFF;
+
+}
+
+
+
+
+
+
+
+#orderArea select, label 
+
+{
+
+    width: 100%;
+
+    color: #000;
+
+    border: none !important;
+
+}
+
+
+
+#orderArea input[type="text"], #orderArea select
+
+{
+
+
+
+   padding: 15px;
+
+   width: 50%;
+
+   font-size: 20px;
+
+   background: none;
+
+   outline: none;
+
+   border: none;
+
+   margin: 10px;
+
+   border-bottom: 2px dashed rgba(225, 225, 225, 1);
+
+   color: #FFF;
+
+}
+
+
+
+select option 
+
+{
+
+    color: #000;
+
+}
+
+
+
+.getCustomers
+
+{
+
+    float: left;
+
+    margin: auto;
+
+    margin-bottom: 10px;
+
+}
+
+
+
+.getCustomers select 
+
+{
+
+    width:  100% !important;
+
+}
+
+
+
+:disabled
+
+{
+
+    color: #FFF;
+
+    font-weight: bold;
+
+    border: 1px dashed #FFF !important;
+
+}
+
+
+
+.registered_users
+
+{
+
+  width: 100% !important;
+
+}
+
+
+
+#orderArea .markSaveCustomer
+
+{
+
+ float: right;
+
+}
+
+
+
+
+
+.messageToDev
+
+{
+
+    width: 740px;
+
+    float: left;
+
+    min-height: 100px;
+
+    max-height: 280px !important;
+
+    overflow-y: scroll;
+
+    font-size: 20px;
+
+    outline:none;
+
+    margin-bottom: 10px;
+
+    padding-left: 10px;
+
+    padding-right: 10px;
+
+    padding-bottom: 5px;
+
+    cursor: pointer;
+
+    margin-top: 10px;
+
+
+
+}
+
+
+
+
+
+.messageToDev:hover
+
+{
+
+    background-color: rgba(225, 225, 225, 0.3);
+
+}
+
+
+
+.stepCount
+
+{
+
+    float: left;
+
+    width: 100%;
+
+    margin-top: 15px;
+
+}
+
+
+
+.disabled .Remove
+
+{
+
+    background-color: gray  !important;
+
+}
+
+
+
+.disabled input
+
+{
+
+    pointer-events: none;
+
+}
+
+
+
+.addToList
+
+{
+
+    float: left;
+
+    margin-left: 10px;
+
+    margin-top: 10px;
+
+    display:block;
+
+    height: 30px;
+
+    width: 30px;
+
+    border-radius: 50%;
+
+    border:none;
+
+    cursor: pointer;
+
+    font-size: 15px;
+
+    color: #FFF;
+
+    background-color: #6cb6f7;
+
+}
+
+
+
+.resetList, .reCreateList
+
+{
+
+    display: none;
+
+    float: left;
+
+    margin-left: 50px;
+
+    margin-top: 10px;
+
+    height: 30px;
+
+    border-radius: 4px;
+
+    border:none;
+
+    cursor: pointer;
+
+    font-size: 15px;
+
+    color: #FFF;
+
+    background-color: #f76c6c;
+
+}
+
+.reCreateList
+{
+
+    background-color: #2da242;
+}
+
+
+
+
+
+
+.messageToDev .stepByStep
+
+{
+
+    color: #FFF !important;
+
+    float: left;
+
+    width: 600px !important;
+
+    border: 1px solid red;
+
+    padding: 0 !important;
+
+    outline: none;
+
+    height: 30px;
+
+    font-size: 17px !important;
+
+    border-bottom: 1px solid #FFF !important;
+
+    margin: 0 !important;
+
+}
+
+
+
+.stepCount span
+
+{
+
+    background-color:#4593d7;
+
+    font-size: 15px;
+
+    border-radius: 4px;
+
+    color: #FFF;
+
+    cursor: pointer;
+
+    float: left;
+
+    width: 30px;
+
+    height: 30px;
+
+    text-align: center;
+
+    line-height: 30px;
+
+    margin-right: 5px;
+
+}
+
+
+
+.stepCount .delete 
+
+{
+
+    background-color: #d74545;
+
+}
+
+
+
+.text
+
+{
+
+    box-sizing: border-box;
+
+    margin-top: 13px;
+
+    float: left;
+
+    width: 803px;
+
+
+
+
+
+}
+
+
+
+.content
+
+{
+    box-shadow: 2px 2px 10px #000;
+
+    resize: none !important;
+
+}
+
+
+
+h5
+
+{
+
+    font-size: 16px;
+
+}
+
+
+
+.markContainer
+
+{
+
+    float: right;
+
+    width: 100%;
+
+    display: flex;
+
+    flex-direction: row;
+
+    justify-content: right;
+
+    display: flex;
+
+}
+
+
+
+.mark
+
+{
+
+    border-bottom: 1px solid #ccc;
+
+    float: right;
+
+    margin-bottom: 10px;
+
+    border-radius: 10px;
+
+    margin-left: 10px;
+
+    margin-left: 10px;
+
+    color: #000;
+
+    flex-direction: row;
+
+    justify-content: left;
+
+    display: flex;
+
+}
+
+
+
+
+
+.markContainer .label
+
+{
+
+    margin-right: 10px;
+
+    margin-left: 10px;
+
+    height: 20px;
+
+}
+
+
+
+.mark input[type="checkbox"]
+
+{
+    margin-top: 15px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+
+}
+
+
+
+
+
+.fields
+
+{
+
+    display: flex;
+
+    flex-direction: row;
+
+    justify-content: center;
+
+    margin: auto;
+
+    width: 100%;
+
+}
+
+
+
+.imagesContainer
+
+{
+    display: none;
+    float: left;
+    width: 100%;
+}
+
+
+
+.images
+
+{
+
+    margin-top: 10px;
+
+    background-color: gray;
+
+    height: 100px;
+
+    position: relative;
+
+
+
+}
+
+
+
+.images h1
+
+{
+
+    position: absolute;
+
+    bottom: 0;
+
+    color: #FFF;
+
+    top: 25px;
+
+    text-align: left;
+
+    width: 100%;
+
+    left: 10px;
+
+    font-size: 15px;
+
+    color: #FFF;
+
+}
+
+
+
+.uploadbg
+
+{
+
+    cursor: pointer;
+
+    background: url("../images/uploadicon.png") no-repeat;
+
+    background-position: center;
+
+    position: absolute;
+
+    top: 0;
+
+    bottom:0;
+
+    left:0;
+
+    right: 0;
+
+    background-color: #4593d7;
+
+    border-radius: 5px;
+
+    border: 1px dashed #FFF;
+
+}
+
+
+
+.showCase
+
+{
+
+    max-height: 168px;
+
+    overflow-y: scroll;
+
+    background-color: rgba(225, 225, 225, 0.7);
+
+    width: 100%;
+
+    float: left;
+
+}
+
+
+
+
+
+
+.showCase .loading
+{
+    background: url('../images/icons/loading.gif') no-repeat center center;
+    background-size: 40px !important;
+}
+
+.showCase #imageHandler
+
+{
+
+    margin: 5px;
+
+    float: left;
+
+    width: 160px;
+
+    height: 160px;
+
+    background-size: cover;
+
+    position: relative;
+
+}
+
+
+
+
+
+#imageHandler .DeleteImage
+
+{
+
+   display: block;
+
+   position: absolute;
+
+   bottom: 1px;
+
+   right: 2px;
+
+   border: none;
+
+   background-color: #d74545;
+
+   color: #FFF;
+
+   padding: 10px;
+
+   cursor: pointer;
+
+   opacity: .8;
+
+}
+
+
+
+#imageHandler .DeleteImage:hover
+
+{
+    opacity: 1;
+}
+

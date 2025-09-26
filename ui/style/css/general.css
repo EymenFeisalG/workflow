@@ -1,0 +1,181 @@
+/* custom scrollbar */
+::-webkit-scrollbar {
+    width: 20px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: #d6dee1;
+    border-radius: 20px;
+    border: 6px solid transparent;
+    background-clip: content-box;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #a8bbbf;
+  }
+  
+.generalModal
+
+{
+    background-color: rgba(0, 0, 0, .3);
+    position: fixed;
+    z-index: 5;
+    top: 0;
+    bottom:0;
+    right: 0;
+    left:0;
+}
+
+
+.galleryModal
+{
+    background-color: rgba(0, 0, 0, .7);
+}
+
+.alert
+{
+
+    color: #000;
+    background-color: #FFF;
+    width: 400px;
+    height: 200px;
+    margin: auto;
+    margin-top: 10%;
+    box-shadow: 2px 2px 20px #000;
+    position: relative;
+}
+
+
+
+.alert .title
+
+{
+
+    background: linear-gradient(#3197f0,#0e5ca1);
+
+    font-size: 20px;
+
+    color: #FFF;
+
+    padding: 10px;
+
+}
+
+
+
+.alert p 
+
+{
+
+    padding: 15px;
+
+    font-size: 20px;
+
+}
+
+
+
+.confirm
+
+{
+
+    position: absolute;
+
+    bottom: 0;
+
+    padding: 5px;
+
+    right: 0;
+
+}
+
+
+
+.alert button
+
+{
+
+    border-radius: 5px;
+
+    width: 100px;
+
+    cursor: pointer;
+
+    margin-left: 5px;
+
+}
+
+
+
+.alert button:hover 
+
+{
+
+    box-shadow: 2px 2px 10px #000;
+
+}
+
+
+
+.alert .no
+
+{
+
+    border: none;
+
+    background: linear-gradient(rgb(226, 44, 44), rgb(158, 9, 9));
+
+    padding: 10px;
+
+    color: #FFF;
+
+}
+
+
+
+.alert .yes
+
+{
+
+    border: none;
+
+    background: linear-gradient(#3197f0,#0e5ca1);
+
+    padding: 10px;
+
+    color: #FFF;
+
+}
+
+
+
+
+.notis
+{
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: left;
+    box-sizing: border-box;
+    padding: .75rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: .25rem;
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    margin-top: 1rem;
+    position: fixed;
+    max-width: 500px;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px;
+    display: none;
+    z-index: 100;
+}
