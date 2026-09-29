@@ -13,4 +13,11 @@ Desktop.ini
 .vscode/
 .idea/
 
-resources/
+# Publicera bara de PHPMailer-filer som applikationen använder.
+resources/PHPMailer/*
+!resources/PHPMailer/LICENSE
+!resources/PHPMailer/src/
+resources/PHPMailer/src/*
+!resources/PHPMailer/src/Exception.php
+!resources/PHPMailer/src/PHPMailer.php
+!resources/PHPMailer/src/SMTP.php

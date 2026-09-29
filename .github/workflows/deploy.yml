@@ -41,6 +41,16 @@ jobs:
             */) ;;
             *) echo 'FTP_SERVER_DIR must end with /' >&2; exit 1 ;;
           esac
+          for file in \
+            resources/PHPMailer/src/Exception.php \
+            resources/PHPMailer/src/PHPMailer.php \
+            resources/PHPMailer/src/SMTP.php \
+            resources/tinymce/tinymce.min.js; do
+            if [ ! -f "$file" ]; then
+              echo "Missing application dependency: $file" >&2
+              exit 1
+            fi
+          done
 
       - name: Upload committed application files
         uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
