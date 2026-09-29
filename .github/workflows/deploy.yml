@@ -16,13 +16,13 @@ concurrency:
 jobs:
   deploy:
     name: Upload to production
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: production
     timeout-minutes: 20
 
     steps:
       - name: Check out the committed version
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Check deployment configuration
         env:

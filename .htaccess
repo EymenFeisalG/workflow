@@ -1,5 +1,6 @@
 Options -Indexes
 DirectoryIndex index.php index.html
+AddType application/x-httpd-php84 .php
 
 <FilesMatch "^(\.env(?:\..*)?|\.workflow-ftp-deploy-state\.json|\.gitignore|web\.config|README\.md)$">
     Require all denied
