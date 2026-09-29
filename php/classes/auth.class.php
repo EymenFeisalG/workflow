@@ -119,8 +119,6 @@ class auth extends database
             $userinfo = unserialize($_COOKIE['user']);
 
             $_SESSION['user'] = $userinfo;
-
-            $this->initRights();
         }
 
         if(!defined('login_req'))
@@ -137,8 +135,10 @@ class auth extends database
             exit;
         }
 
-       if(isset($_SESSION['user']))
+        if(isset($_SESSION['user']))
        {
+            // Read current permissions on each request so admin changes take effect after reload.
+            $this->initRights();
             if(isset($_SESSION['addOrder']))
             {
                 unset($_SESSION['addOrder']);
@@ -219,10 +219,23 @@ class auth extends database
             if($password == $cPassword)
             {
                 $role = ($data['role'] == 'Arbetare') ? '1' : '2';
-                self::query("INSERT INTO users (username, password, email, user_role, hourSalary) VALUES ('".$data['username']."', '".$password."', '".$data['email']."', '".$role."', '0')");
-
-                // delete seckey
-                self::query("DELETE FROM register_users WHERE seckey = '".$seckey."'");
+                $newUserId = 0;
+                try {
+                    self::query("INSERT INTO users (username, password, email, user_role, hourSalary) VALUES ('".$data['username']."', '".$password."', '".$data['email']."', '".$role."', '0')");
+                    $newUserId = (int)self::$mysql->insert_id;
+                    $defaultRights = ($role === '2') ? ['admin', 'all'] : ['add_new_order'];
+                    foreach ($defaultRights as $right) {
+                        self::query("INSERT INTO privileges (userid, privilege) VALUES ($newUserId, '".self::escape($right)."')");
+                    }
+                    self::query("DELETE FROM register_users WHERE Seckey = '".$seckey."'");
+                } catch (Throwable $error) {
+                    // users/privileges can be MyISAM, where transaction rollback has no effect.
+                    if ($newUserId > 0) {
+                        self::$mysql->query("DELETE FROM privileges WHERE userid = $newUserId");
+                        self::$mysql->query("DELETE FROM users WHERE id = $newUserId");
+                    }
+                    throw $error;
+                }
                 
                 $this->login($data['username'], $rawPassword, false);
                 

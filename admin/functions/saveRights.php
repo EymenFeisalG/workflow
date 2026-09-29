@@ -6,7 +6,10 @@ header('Content-Type: application/json; charset=utf-8');
 if (!$auth->hasRight('admin')) { http_response_code(403); echo json_encode(['error' => 'FORBIDDEN']); exit; }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !hash_equals($_SESSION['csrf_token'], (string)($_POST['csrf_token'] ?? ''))) { http_response_code(403); echo json_encode(['error' => 'INVALID_REQUEST']); exit; }
 require '../../php/classes/admin.class.php';
-$admin = new admin($email_settings);
-$result = $admin->addUser($_POST['username'] ?? '', $_POST['email'] ?? '', $_POST['role'] ?? '');
-if (!is_array($result)) http_response_code(400);
-echo json_encode(is_array($result) ? $result : ['status' => $result]);
+$rights = $_POST['rights'] ?? [];
+if (!is_array($rights) || !(new admin($email_settings))->saveRights((int)($_POST['user_id'] ?? 0), $rights)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'INVALID_RIGHTS']);
+    exit;
+}
+echo json_encode(['status' => 'OK']);

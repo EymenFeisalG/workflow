@@ -564,7 +564,7 @@ class main extends database
                 if($this->hasRight('orders_show_all'))
                     $string = "SELECT query.*, users.username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE `query`.`status` = 'ongoing'  ORDER BY `query`.number_prio ASC";
                 else 
-                    $string = 0;
+                    $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON query.worker_name_id = users.id WHERE `query`.`status` = 'ongoing' AND query.worker_name_id = '".(int)$myId."' ORDER BY query.number_prio ASC";
 
             break;
 
@@ -573,7 +573,7 @@ class main extends database
                 if($this->hasRight('orders_show_all'))
                     $string = "SELECT query.*, users.username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE `query`.`status` = 'ongoing'  ORDER BY `query`.number_prio ASC";
                 else 
-                    $string = 0;
+                    $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON query.worker_name_id = users.id WHERE `query`.`status` = 'ongoing' AND query.worker_name_id = '".(int)$myId."' ORDER BY query.number_prio ASC";
 
             break;
 
