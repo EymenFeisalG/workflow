@@ -223,5 +223,26 @@ När du vidareutvecklar Workflow gäller följande fasta regler:
 4. **Verifera installationen**:
    Navigera till `http://localhost/` eller den konfigurerade IIS-bindningen. Logga in med administratörskonto.
 
+### Databasmigreringar
+
+Git versionshanterar SQL-filerna i `migrations/`, men inte databasens innehåll. Lägg en ny schemaändring i en ny, tidsstämplad `.sql`-fil, till exempel `migrations/20260930_add_due_date.sql`. Använd **en SQL-sats per fil**, ändra aldrig en redan körd fil och skapa en ny fil för nästa ändring. Ta separat backup före större ändringar; migreringarna ersätter inte backup av data.
+
+Kör från projektroten med PHP CLI:
+
+```powershell
+php bin/migrate.php --status --expected-db=workflow
+php bin/migrate.php --up --expected-db=workflow
+```
+
+`schema_migrations` sparar filnamn, kontrollsumma och körningstid i den anslutna databasen. Verktyget kör bara väntande filer, stoppar ändrade eller saknade tidigare filer och kräver att `--expected-db` matchar både konfigurationen och den faktiska anslutningen. Vid fel avbryts körningen. MySQL kan spara en schemaändring även om nästa steg misslyckas; kontrollera därför databasen innan du försöker igen.
+
+Den äldre `20260929_order_contact.sql` är redan manuellt körd lokalt och i produktion. När ett befintligt schema tas i bruk ska man först kontrollera att ändringen finns och sedan registrera just den filen utan att köra den igen:
+
+```powershell
+php bin/migrate.php --baseline=20260929_order_contact.sql --expected-db=workflow
+```
+
+GitHub Actions kör väntande migreringar mot `xlfood_se_db_workflow` **före** FTPS-uppladdningen. Miljön `production` behöver `DB_HOST` och `DB_USER` som variabler samt `DB_PASS` som hemlighet. Databasnamnet är låst i arbetsflödet. Håll varje schemaändring kompatibel med den tidigare appversionen eftersom den körs innan filerna publiceras. `.env`, SQL-filerna och migreringsverktyget laddas inte upp till webbservern.
+
 ---
 *Dokumentationen underhålls löpande i takt med att nya moduler implementeras i Workflow.*
