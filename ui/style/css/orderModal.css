@@ -1438,7 +1438,7 @@
 .historyFloatTrigger {
     display: none;
     position: fixed;
-    bottom: max(5.25rem, calc(4.75rem + env(safe-area-inset-bottom, 0px)));
+    bottom: max(7rem, calc(6.5rem + env(safe-area-inset-bottom, 0px)));
     right: 1rem;
     background: #0f172a;
     color: #ffffff;
@@ -1454,6 +1454,26 @@
     gap: 0.45rem;
 }
 
+.dockSubmenuList .historyFloatTrigger {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-radius: 0.6rem;
+    background: transparent;
+    box-shadow: none;
+    color: #e2e8f0;
+    font: inherit;
+    text-align: left;
+}
+
+.dockSubmenuList .historyFloatTrigger:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
 .historyFloatBadge {
     background: #2563eb;
     color: #fff;
@@ -1465,7 +1485,7 @@
 @media (max-width: 64rem) {
     .createdHistoryCard {
         position: fixed;
-        bottom: max(5.25rem, calc(4.75rem + env(safe-area-inset-bottom, 0px)));
+        bottom: max(7rem, calc(6.5rem + env(safe-area-inset-bottom, 0px)));
         right: 1rem;
         width: 20rem;
         max-width: calc(100vw - 2rem);

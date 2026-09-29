@@ -1,4 +1,4 @@
-# Workflow (WorkGUI)
+# Workflow
 
 Ett snabbt, modulärt och responsivt ärende- och uppgiftshanteringssystem byggt i PHP och MySQL. Systemet är utformat för digitala byråer och företag för att hantera uppdrag, kontaktpersoner, checklistor, tidsrapportering och medarbetartilldelning i realtid.
 

@@ -28,15 +28,13 @@
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
     <script src="ui/js/login.js"></script>
-    <title>WorkGUI: Log in</title>
-    <link rel="icon" type="image/x-icon" href="ui/style/images/icons/W.ico">
+    <title>Workflow: Logga in</title>
 </head>
 <body>
 
     <main class="loginHolder">
         <section class="loginForm" aria-labelledby="login-title">
-            <div class="brandMark" aria-hidden="true">W</div>
-            <p class="eyebrow">WorkGUI</p>
+            <p class="eyebrow">Workflow</p>
             <h1 id="login-title">Välkommen tillbaka</h1>
             <p class="loginIntro">Logga in för att fortsätta till ditt arbetsflöde.</p>
 
