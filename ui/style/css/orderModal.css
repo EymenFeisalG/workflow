@@ -221,10 +221,6 @@
     border-color: #4ade80;
 }
 
-.lastDelegatedChip .chipIcon {
-    font-size: 0.75rem;
-}
-
 /* Dropdown Menu / Picker Popover */
 .delegationDropdown {
     display: none;
@@ -407,12 +403,12 @@
 /* Draft Status Badge & Alert */
 .orderDraftBadge {
     font-size: 0.72rem;
-    font-weight: 500;
-    padding: 0.15rem 0.5rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
     border-radius: 9999px;
-    background: #f0fdf4;
-    color: #15803d;
-    border: 1px solid #bbf7d0;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
 }
 
 .draftAlertBar {
@@ -449,25 +445,6 @@
     background: #fee2e2;
     border-color: #fca5a5;
     color: #dc2626;
-}
-
-/* Sidebar Draft Indicator */
-.addOrder.has-draft {
-    position: relative;
-}
-
-.addOrder.has-draft::after {
-    content: "Utkast";
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.65rem;
-    font-weight: 600;
-    background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
-    padding: 0.15rem 0.4rem;
-    border-radius: 0.25rem;
 }
 
 .orderModalForm {
@@ -1113,6 +1090,74 @@
     flex-shrink: 0;
 }
 
+.correctionPasswordClear {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.78rem;
+    color: #475569;
+}
+
+.correctionPasswordClear[hidden],
+.correctionExistingImages[hidden] {
+    display: none;
+}
+
+.stepTextInput {
+    min-width: 0;
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.35rem;
+    font: inherit;
+}
+
+.stepDoneBadge {
+    margin-left: 0.4rem;
+    color: #15803d;
+    font-size: 0.7rem;
+}
+
+.correctionExistingImages {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.correctionImageRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.4rem;
+}
+
+.correctionImageRow a {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.correctionImageRemove {
+    flex: none;
+    border: 0;
+    background: transparent;
+    color: #b91c1c;
+    cursor: pointer;
+}
+
+.correctionPdfPreview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    overflow: hidden;
+    font-size: 0.72rem;
+    color: #334155;
+    word-break: break-word;
+}
+
 @media (min-width: 40rem) {
     .orderModalFooter {
         padding: 1rem 2rem calc(1rem + 1.25rem);
@@ -1522,10 +1567,28 @@
 
 @media (max-width: 480px) {
     .historyTabTrigger {
-        display: grid;
-        grid-template-columns: repeat(2, max-content);
-        gap: 0.2rem 0.7rem;
-        padding: 0.35rem 0.7rem;
+        display: flex;
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: calc(100vw - 4rem);
+        justify-content: flex-start;
+        gap: 0.2rem;
+        padding: 0.35rem 0.4rem;
+        font-size: 0.6rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .historyTabTrigger::-webkit-scrollbar {
+        display: none;
+    }
+
+    .historyQuickBar::before {
+        display: none;
+    }
+
+    .historyQuickBar .notificationBell {
+        box-sizing: border-box;
     }
 
     .historySummaryItem + .historySummaryItem {
@@ -1533,19 +1596,68 @@
         border-left: 0;
     }
 
+    .historySummaryItem {
+        gap: 0.08rem;
+    }
+
+    .historySummaryBadge,
+    .historyFloatBadge {
+        min-width: 0.85rem;
+        min-height: 0.85rem;
+        padding: 0 0.2rem;
+        font-size: 0.55rem;
+    }
+
     .historyQuickBar {
         margin-bottom: 0.3rem;
     }
 
     .createdHistoryCard {
-        bottom: calc(8.7rem + env(safe-area-inset-bottom, 0px));
-        max-height: calc(100dvh - 9.5rem - env(safe-area-inset-bottom, 0px));
+        bottom: calc(7.6rem + env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - 8.5rem - env(safe-area-inset-bottom, 0px));
     }
 }
 
 @media (max-width: 360px) {
     .historyQuickBar::before {
         display: none;
+    }
+}
+
+@media (max-width: 47.99rem) {
+    .orderModalOverlay {
+        height: 100dvh;
+    }
+
+    .orderModalCard {
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        max-height: none;
+        margin-bottom: 0;
+        border: 0;
+        border-radius: 0;
+        transform: translateY(100%);
+    }
+
+    .orderModalSheetHandle {
+        display: none;
+    }
+
+    .orderModalFooter {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .footerBtnGroup {
+        width: 100%;
+    }
+
+    .orderModalSubmitBtn {
+        flex: 1;
+        justify-content: center;
     }
 }
 

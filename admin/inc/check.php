@@ -3,7 +3,7 @@
 if(!isset($_GET['pageName']))
     return false;
 
-    $pages = ['time', 'settings', 'users', 'pay'];
+    $pages = ['users'];
 
 $pageName = $_GET['pageName'];
 

@@ -173,32 +173,6 @@ class main extends database
         echo $data;
     }
 
-    public function TimeToMinutes($value)
-    {
-
-        if(str_contains($value, ':'))
-        {
-            $time = explode(":", $value);
-            $totalMinutes = ($time[0] * 60) + $time[1];
-        }
-        else
-        {
-            $totalMinutes = $value;
-        }
-
-        $hours = intval($totalMinutes / 60);
-        $minutes = $totalMinutes - (60 * $hours);
-        
-        $clock = ["hours" => $hours, "minutes" => $minutes, "totalTime" => $totalMinutes];
-        
-        return $clock;
-    }
-
-    public function MyWorkingTime($userid, $paid = false)
-    {   
-        return ["hours" => 0, "minutes" => 0, "totalTime" => 0];
-    }
-
     public function restoreOrder($id)
     {
         $id = (int)$id;
@@ -209,12 +183,7 @@ class main extends database
         echo $id;
     }
 
-    public function countSalary($totalMinutes)
-    {
-        return 0;
-    }
-
-    public function addTimeWorker($time, $id, $orderDesc, $action)
+    public function submitOrderDecision($id, $orderDesc, $action)
     {
         $orderId = (int)$id;
         $notificationDetail = trim(strip_tags((string)$orderDesc));
@@ -234,7 +203,6 @@ class main extends database
             if (self::$mysql->affected_rows > 0) $this->notifyOrder($orderId, 'pending', $notificationDetail);
         });
 
-        echo json_encode(['status' => 'success']);
     }
 
 
@@ -353,62 +321,6 @@ class main extends database
  
 
 
-    public function updateOrder($orderid, $company, $domain, $desc, $worker, $admin = '', $password = '', $asap = false, $messageToDev = "", $contactName = '', $contactOrg = '', $contactDetails = '')
-    {
-        if($company == '')
-            return false;
-
-        $orderid = (int)$orderid;
-        $asap = $asap === 'asap' ? 'asap' : 'normal';
-
-        $company = self::escape($company);
-        $domain = self::escape($domain);
-        $admin = self::escape($admin);
-        $password = self::escape($password);
-        $contactName = self::escape($contactName);
-        $contactOrg = self::escape($contactOrg);
-        $contactDetails = self::escape($contactDetails);
-        $desc = self::escape($desc);
-        $worker = self::escape($worker);
-        $message = self::escape($messageToDev);
-        $date = date("Y-m-d H:i");
-
-        return $this->taskTransaction(function () use ($orderid, $company, $domain, $desc, $worker, $admin, $password, $contactName, $contactOrg, $contactDetails, $asap) {
-            $previous = $this->notifications()->order($orderid, true);
-            if (!$previous) return false;
-            $oldWorker = (int)$previous['worker_name_id'];
-            self::query("
-
-            UPDATE query
-                SET Name = '".$company."', 
-                Hostname = '".$domain."',
-                Info = '".$desc."', 
-                admin = '".$admin."',
-                password = '".$password."', 
-                contact_name = '".$contactName."',
-                contact_org = '".$contactOrg."',
-                contact_details = '".$contactDetails."',
-                Prio = '".$asap."', 
-                worker_name_id = '".$worker."'
-
-                WHERE id = '".$orderid."'
-        ");
-
-            if (self::$mysql->affected_rows > 0) {
-                $newWorker = (int)$worker;
-                if ($oldWorker !== $newWorker) {
-                    $this->notifyOrder($orderid, 'assigned');
-                    if ($oldWorker !== (int)$previous['creator']) {
-                        $this->notifications()->emitTo($orderid, (int)($_SESSION['user']['userid'] ?? 0), 'unassigned', '', [$oldWorker]);
-                    }
-                } else {
-                    $this->notifyOrder($orderid, 'updated');
-                }
-            }
-            return true;
-        });
-    }
-
     public function getImg($orderid)
     {
             $images = self::query("SELECT * FROM images WHERE Path = '".$orderid."'");
@@ -421,24 +333,45 @@ class main extends database
     }
 
 
-    public function checkStep($stepid, $stepMsg)
+    public function setStepCompletion(int $stepId, bool $completed): array
     {
-        $myId = (int)($_SESSION['user']['userid'] ?? 0);
-        $stepid = (int)$stepid;
-        $allowed = $this->taskTransaction(function () use ($myId, $stepid) {
-            $query = self::query("SELECT steps.orderId, steps.`desc`, steps.completed+0 AS completed FROM steps INNER JOIN `query` ON steps.orderId = `query`.id WHERE `query`.worker_name_id = '".$myId."' AND steps.id = '".$stepid."' LIMIT 1 FOR UPDATE");
-            if ($query->numrows() == 0) return false;
-            $step = $query->assoc();
-            self::query("UPDATE steps SET completed = b'1' WHERE id = '".$stepid."' AND completed = b'0'");
-            if (self::$mysql->affected_rows > 0) $this->notifyOrder((int)$step['orderId'], 'step_completed', $step['desc']);
-            return true;
+        $actorId = (int)($_SESSION['user']['userid'] ?? 0);
+        if ($actorId < 1 || $stepId < 1) return ['success' => false, 'error' => 'Ogiltigt steg.'];
+
+        return $this->taskTransaction(function () use ($actorId, $stepId, $completed) {
+            $stmt = self::$mysql->prepare('SELECT s.orderId, s.`desc`, s.completed+0 AS completed, q.creator, q.worker_name_id, q.status FROM steps s JOIN `query` q ON q.id = s.orderId WHERE s.id = ? LIMIT 1 FOR UPDATE');
+            $stmt->bind_param('i', $stepId);
+            $stmt->execute();
+            $step = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if (!$step || ((int)$step['creator'] !== $actorId && (int)$step['worker_name_id'] !== $actorId)) {
+                return ['success' => false, 'error' => 'Du har inte tillgång till det här steget.'];
+            }
+            if (!in_array($step['status'], ['ongoing', 'rework'], true)) {
+                return ['success' => false, 'error' => 'Steg kan bara ändras på aktiva uppgifter.'];
+            }
+            if ((bool)$step['completed'] === $completed) {
+                return ['success' => true, 'completed' => $completed];
+            }
+
+            $value = $completed ? 1 : 0;
+            $update = self::$mysql->prepare('UPDATE steps SET completed = ? WHERE id = ?');
+            $update->bind_param('ii', $value, $stepId);
+            $update->execute();
+            $update->close();
+            $this->notifyOrder((int)$step['orderId'], $completed ? 'step_completed' : 'step_reopened', $step['desc']);
+            return ['success' => true, 'completed' => $completed];
         });
-        if (!$allowed) echo 'notMine';
     }
 
     public function getSteps($orderId)
     {
-        $query = self::query("SELECT steps.*, completed+0 AS completed FROM steps WHERE orderId = '".(int)$orderId."'");
+        $order = $this->notifications()->order((int)$orderId);
+        $myId = (int)($_SESSION['user']['userid'] ?? 0);
+        if (!$order || !$this->notifications()->canAccess($order, $myId, $this->hasRight('orders_show_all'))) return;
+        $canEdit = ((int)$order['creator'] === $myId || (int)$order['worker_name_id'] === $myId)
+            && in_array($order['status'], ['ongoing', 'rework'], true);
+        $query = self::query("SELECT steps.*, completed+0 AS completed FROM steps WHERE orderId = '".(int)$orderId."' ORDER BY step, id");
 
         if($query->numrows() > 0)
         
@@ -451,13 +384,13 @@ class main extends database
         while($skriv = $query->assoc())
         {
             ?>
-               <div data-stepid = '<?php echo $skriv['id']; ?>' class="step">
-                    
-                <div class="checkmark">
-                    <input <?php if($skriv['completed'] == 1) echo 'checked disabled'; ?> class="checkStep" type="checkbox" />
-                </div>
-                    <div <?php if($skriv['completed'] == 1) echo 'style="text-decoration: line-through;"'; ?> class="stepValue"><?php echo $skriv['step'] . ' ' . $skriv['desc']; ?></div>
-                </div>
+               <div data-stepid="<?php echo (int)$skriv['id']; ?>" class="step<?php if ($skriv['completed'] == 1) echo ' is-complete'; ?>">
+                   <label class="stepLabel">
+                       <input <?php if ($skriv['completed'] == 1) echo 'checked '; if (!$canEdit) echo 'disabled '; ?>class="checkStep" type="checkbox" />
+                       <span class="stepValue"><?php echo htmlspecialchars($skriv['step'] . ' ' . $skriv['desc'], ENT_QUOTES, 'UTF-8'); ?></span>
+                   </label>
+                   <span class="stepStatus" role="status" aria-live="polite"></span>
+               </div>
 
             <?php
         }
@@ -525,11 +458,11 @@ class main extends database
                             <?php
                         }
 
-                        if($this->hasRight('changeOrder'))
+                        if((int)$skriv['creator'] === (int)$myId || $this->hasRight('changeOrder'))
                         {
                                 ?>
                                    
-                                     <button class="change">Korrigera order</button>
+                                     <button class="change">Korrigera uppgift</button>
                                 <?php
                         }
                     
@@ -750,11 +683,11 @@ class main extends database
                             <?php
                         }
 
-                        if($this->hasRight('changeOrder'))
+                        if((int)$skriv['creator'] === (int)$myId || $this->hasRight('changeOrder'))
                         {
                                 ?>
                                    
-                                     <button class="change">Korrigera order</button>
+                                     <button class="change">Korrigera uppgift</button>
                                 <?php
                         }
                     
@@ -954,19 +887,6 @@ class main extends database
 
         echo $desc;
 
-    }
-
-    public function getWorkers($orderWorker = '')
-    {   
-        $myId = $_SESSION['user']['userid'];
-        $data = self::query("SELECT username, id FROM users WHERE NOT id = '".$myId."'");
-
-        while($username = $data->assoc())
-        {
-            ?>
-                <option <?php if($orderWorker == $username['id']) echo 'selected'; ?> value="<?php echo $username['id']; ?>"><?php echo 'Skicka uppgiften till: ' .$username['username']; ?></option>
-            <?php
-        }
     }
 
     public function getWorkersList()

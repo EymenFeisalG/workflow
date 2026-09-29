@@ -35,9 +35,6 @@
     <main class="loginHolder">
         <section class="loginForm" aria-labelledby="login-title">
             <p class="eyebrow">Workflow</p>
-            <h1 id="login-title">Välkommen tillbaka</h1>
-            <p class="loginIntro">Logga in för att fortsätta till ditt arbetsflöde.</p>
-
             <form method="post">
                 <div class="fieldGroup">
                     <label for="username">Användarnamn eller e-post</label>

@@ -1,26 +1,5 @@
 <?php
-
-   define('login_req', true);
-
-   require '../../global.php';
-
-   $orderId = $main->updateOrder(
-
-      $_POST['orderid'],
-      $_POST['company_name'],
-      $_POST['company_domain'],
-      $_POST['order_desc'],
-      $_POST['worker'],
-      $_POST['company_admin_username'],
-      $_POST['company_admin_password'],
-      $_POST['asap'],
-      '',
-      $_POST['contact_name'] ?? '',
-      $_POST['contact_org'] ?? '',
-      $_POST['contact_details'] ?? ''
-  );
-
-
-  echo $orderId;
-
-
+// Gammal sparväg får inte kringgå behörighet eller CSRF-kontroll.
+http_response_code(410);
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode(['success' => false, 'error' => 'Använd den nya korrigeringsvyn.']);

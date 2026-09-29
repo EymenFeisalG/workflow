@@ -38,111 +38,6 @@ class admin extends database
     }
 
 
-    public function TimeToMinutes($value)
-    {
-
-        if(str_contains($value, ':'))
-        {
-            $time = explode(":", $value);
-            $totalMinutes = ($time[0] * 60) + $time[1];
-        }
-        else
-        {
-            $totalMinutes = $value;
-        }
-
-        $hours = intval($totalMinutes / 60);
-        $minutes = $totalMinutes - (60 * $hours);
-        
-        $clock = ["hours" => $hours, "minutes" => $minutes, "totalTime" => $totalMinutes];
-        
-        return $clock;
-    }
-
-   public function pay($pay = [], $paymentOrder = [])
-   {
-        $money = $paymentOrder[0];
-        $time = $paymentOrder[1];
-        $user = $paymentOrder[2];
-
-        $date = date("Y-m-d H:i");
-
-                
-        self::query("INSERT INTO payments (minutes, date, money, user) 
-        VALUES ('".$time."',  '".$date."', '".$money."', '".$user."')");
-
-        foreach($pay as $paid => $key)
-        {
-            self::query("UPDATE query SET Paid = '1' WHERE id = '".$key."'");
-        }
-
-
-
-   }
-
-   public function payments()
-   {
-       $query =  self::query("
-       SELECT * 
-FROM payments
-GROUP BY date
-ORDER BY id DESC;
-       ");
-
-        while($skriv = $query->assoc())
-        {
-            ?>
-            
-            <tr>
-            <td><?php echo $skriv['money']; ?> kronor</td>
-            <td><?php echo $skriv['date']; ?></td>
-            <td><?php echo $skriv['minutes']; ?></td>
-            <td><?php echo $skriv['user']; ?></td>
-            </tr>
-            
-            <?php
-        }
-   }
-
-   public function getTimeWorked($workerId)
-   {
-        $data = [];
-
-        $query = self::query("
-			SELECT query.*, 
-       Worker.username AS worker, 
-       Creator.username AS creator 
-FROM query
-LEFT JOIN users Worker ON Worker.id = query.worker_name_id
-LEFT JOIN users Creator ON Creator.id = query.creator
-WHERE query.status = 'completed' 
-AND query.Paid = '0' 
-AND query.worker_name_id = '".$workerId."' 
-AND query.worktime > 0;
-
-        ");
-
-        while($skriv = $query->assoc())
-        {
-
-         
-            $skriv['messageToDev'] = $skriv['worktime'];
-
-            $timeFormat = $this->TimeToMinutes($skriv['worktime']);
-
-            $finalFormat = ($timeFormat['hours'] > 1) ?  $timeFormat['hours'] . ' timmar' :  $timeFormat['hours'] .' timme';
-            $finalFormat .= ' och ';
-            $finalFormat .= ($timeFormat['hours'] > 1) ?  $timeFormat['minutes'] . ' minuter' :  $timeFormat['minutes'] .' minut';
-
-            $skriv['worktime'] = $finalFormat;
-
-            array_push($data, $skriv);
-        }
-
-       echo json_encode($data);
-   }
-
-
    public function getAllUsers()
    {
         // delete old users
@@ -169,10 +64,10 @@ AND query.worktime > 0;
        echo json_encode($users);
    }
 
-   public function addUser($username, $email, $role, $salary)
+   public function addUser($username, $email, $role)
    {
         // check if fields are empty
-        if($username == '' || $email == '' || $role == '' || $salary == '')
+        if($username == '' || $email == '' || $role == '')
         {
             echo 'FIELDS_EMPTY';
             return false;
@@ -182,7 +77,6 @@ AND query.worktime > 0;
       $username = self::escape($username);
       $email = self::escape($email);
       $role = self::escape($role);
-      $salary = self::escape($salary);
       $randomString = $this->RandomString(6);
       $timestamp = time();
 
@@ -204,7 +98,7 @@ AND query.worktime > 0;
             return false;
         }
 
-        self::query("INSERT INTO register_users (username, email, role, Seckey, salary, timestamp) VALUES ('".$username."', '".$email."', '".$role."', '".$randomString."', '".$salary."', '".$timestamp."')");
+        self::query("INSERT INTO register_users (username, email, role, Seckey, salary, timestamp) VALUES ('".$username."', '".$email."', '".$role."', '".$randomString."', '0', '".$timestamp."')");
         
         // send email
 

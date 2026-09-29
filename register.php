@@ -55,8 +55,8 @@
                 <input type="password" name="cPassword">
                 <br>
                 <div class="forgotPassword"><a href="index.php">Logga in</a></div>
-                <div class="buttons">
-                    <input type="submit" class="register" value="Aktivera konto" name="login">
+                <div class="buttons" style="text-align: center;">
+                    <input type="submit" class="register" value="Aktivera konto" name="login" style="background-color: #28a745; color: #fff; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer;">
                 </div>
             </form>
         </div>

@@ -11,12 +11,13 @@ $(document).ready(function () {
 
     // Application State Variables
     let currentDir = (typeof Direction !== 'undefined' && Direction) ? Direction : 'ongoing';
-    let stepCheck = 0;
-    let justOk = { mode: 'none', justOk: true };
     let focusedOrderId = null;
     let temporaryView = false;
     let workflowSortable = null;
     let isSectionLoading = false;
+    window.reloadOrders = function (section) {
+        loadSection(section || currentDir, Boolean(section));
+    };
 
     // Mirror the status counts from the desktop tabs into the mobile submenu.
     ['pending', 'rework', 'completed'].forEach(function (dir) {
@@ -140,6 +141,14 @@ $(document).ready(function () {
                 } else {
                     $orders.html(trimmed);
                     addToOrder();
+                    const selectedId = new URLSearchParams(window.location.search).get('orderId');
+                    if (selectedId && /^\d+$/.test(selectedId)) {
+                        const $selected = $orders.find('[data-orderId="' + selectedId + '"]');
+                        if ($selected.length) {
+                            $selected.addClass('selectedCreatedOrder');
+                            $selected[0].scrollIntoView({ block: 'center' });
+                        }
+                    }
                 }
 
                 // Smooth fade-in
@@ -275,84 +284,70 @@ $(document).ready(function () {
     });
 
     /* ==========================================================================
-       3. Order Steps & Confirmation Modal
+       3. Order Steps
        ========================================================================== */
 
-    $(document).on('click', '.checkStep', function () {
-        stepCheck = $(this).closest('[data-stepid]').attr('data-stepid');
-        let orderId = $(this).closest('[data-steps]').attr('data-steps');
-        justOk.mode = 'steps';
-        justOk.justOk = false;
-        pageAlert("Markera ordern", "Vill du markera steget som färdigt? Beställaren kommer att meddelas.", true);
-    });
+    $(document).on('change', '.checkStep', function () {
+        const stepId = Number($(this).closest('[data-stepid]').attr('data-stepid'));
+        const completed = this.checked;
+        if (!Number.isInteger(stepId) || stepId < 1) return;
+        const $rows = $('.step[data-stepid="' + stepId + '"]');
+        const $checks = $rows.find('.checkStep');
+        const $editableChecks = $checks.filter(':not(:disabled)');
+        $editableChecks.prop('disabled', true);
+        $rows.addClass('is-saving').find('.stepStatus').removeClass('is-error').text('Sparar…');
 
-    $(document).on('click', '.yes', function () {
-        switch (justOk.mode) {
-            case 'steps':
-                if (justOk.justOk) {
-                    $('.generalModal').remove();
-                    $('[data-stepid="' + stepCheck + '"] .checkStep').prop('checked', false);
-                    justOk.mode = 'none';
-                    return false;
-                }
+        $.ajax({
+            url: 'php/functions/checkStep.php',
+            method: 'POST',
+            dataType: 'json',
+            data: { stepid: stepId, completed: completed ? '1' : '0', csrf: WorkflowCsrf }
+        }).done(function (result) {
+            if (!result || !result.success) {
+                showStepError((result && result.error) || 'Steget kunde inte sparas.');
+                return;
+            }
+            $rows.toggleClass('is-complete', Boolean(result.completed));
+            $checks.prop('checked', Boolean(result.completed));
+            $rows.find('.stepStatus').text('Sparat');
+            window.setTimeout(function () {
+                $rows.find('.stepStatus').filter(function () { return $(this).text() === 'Sparat'; }).empty();
+            }, 1800);
+        }).fail(function (xhr) {
+            showStepError((xhr.responseJSON && xhr.responseJSON.error) || 'Steget kunde inte sparas. Försök igen.');
+        }).always(function () {
+            $rows.removeClass('is-saving');
+            $editableChecks.prop('disabled', false);
+        });
 
-                let stepMsg = $('[data-stepid="' + stepCheck + '"] .stepValue').html();
-
-                $.post('php/functions/checkStep.php', { stepid: stepCheck, value: stepMsg }, function (success) {
-                    if (success === 'notMine') {
-                        $('.generalModal').hide();
-                        pageAlert('Misslyckades', 'Du kan inte markera steg som inte är dina.', false);
-                        justOk.mode = 'general';
-                        return false;
-                    }
-
-                    $('[data-stepid="' + stepCheck + '"] .checkStep').prop('disabled', true);
-                    $('.generalModal').remove();
-                    $('[data-stepid="' + stepCheck + '"] .stepValue').css('text-decoration', 'line-through');
-
-                    message("Steget är markerat som färdigt.", "Klart");
-                });
-                break;
-
-            case 'general':
-                $('.generalModal').remove();
-                justOk.mode = 'none';
-                justOk.justOk = true;
-                break;
-        }
-    });
-
-    $(document).on('click', '.no', function () {
-        if (justOk.mode === 'steps') {
-            $('[data-stepid="' + stepCheck + '"] .checkStep').prop('checked', false);
-            $('[data-stepid="' + stepCheck + '"] .stepValue').css('text-decoration', 'none');
-            $('.generalModal').remove();
-            justOk.mode = 'none';
-            justOk.justOk = true;
+        function showStepError(error) {
+            $checks.prop('checked', !completed);
+            $rows.toggleClass('is-complete', !completed);
+            $rows.find('.stepStatus').addClass('is-error').text(error);
         }
     });
 
     /* ==========================================================================
-       4. Attest / Rework Comment Form (.timeForm)
+       4. Attest / Rework Comment Form (.decisionForm)
        ========================================================================== */
 
-    $('.closeTime').on('click', function (e) {
+    $('.closeDecision').on('click', function (e) {
         e.preventDefault();
         $('.modal').hide();
-        $('.timeForm').hide();
-        $('.timeForm input[name="orderid"]').val('');
-        $('.timeForm input[name="action"]').val('');
-        $('.timeForm textarea[name="comment"]').val('');
+        $('.decisionForm').hide();
+        $('.decisionForm input[name="orderid"]').val('');
+        $('.decisionForm input[name="action"]').val('');
+        $('.decisionForm textarea[name="comment"]').val('');
     });
 
-    $('.saveTime').on('click', function (e) {
+    $('.saveDecision').on('click', function (e) {
         e.preventDefault();
 
-        const $form = $('.timeForm');
+        const $form = $('.decisionForm');
         const targetOrderId = $form.find('.orderid').val();
         const actionType = $form.find('.action').val();
 
-        $.post('php/functions/addWorkerTime.php', $form.serialize(), function () {
+        $.post('php/functions/submitOrderDecision.php', $form.serialize(), function () {
             if (actionType === 'deny') {
                 message("Uppgiften har skickats för korrigering.", "Kompletteras");
             } else {
@@ -377,21 +372,21 @@ $(document).ready(function () {
     // Mark as done button
     $(document).on('click', '.done', function () {
         let orderId = $(this).closest('[data-orderId]').attr('data-orderId');
-        $('.timeForm .modalTitle').text("Meddelande / Kommentar (valfritt)");
-        $('.timeForm .action').val('');
-        $('.timeForm .orderid').val(orderId);
+        $('.decisionForm .modalTitle').text("Meddelande / Kommentar (valfritt)");
+        $('.decisionForm .action').val('');
+        $('.decisionForm .orderid').val(orderId);
         $('.modal').show();
-        $('.timeForm').show();
+        $('.decisionForm').show();
     });
 
     // Deny / Request rework
     $(document).on('click', '.denyOrder', function () {
         let orderId = $(this).closest('[data-orderId]').attr('data-orderId');
-        $('.timeForm .modalTitle').text("Vad behöver ändras?");
-        $('.timeForm .action').val('deny');
-        $('.timeForm .orderid').val(orderId);
+        $('.decisionForm .modalTitle').text("Vad behöver ändras?");
+        $('.decisionForm .action').val('deny');
+        $('.decisionForm .orderid').val(orderId);
         $('.modal').show();
-        $('.timeForm').show();
+        $('.decisionForm').show();
     });
 
     // Accept order (Approver)
@@ -438,9 +433,7 @@ $(document).ready(function () {
     // Change order redirect
     $(document).on('click', '.change', function () {
         let orderId = $(this).closest('[data-orderId]').attr('data-orderId');
-        $.post('php/functions/changeOrder.php', { orderId: orderId }, function () {
-            location.href = 'changeorder.php';
-        });
+        if (typeof window.openOrderCorrection === 'function') window.openOrderCorrection(orderId);
     });
 
     /* ==========================================================================
@@ -563,7 +556,7 @@ $(document).ready(function () {
     function escapeNotification(value) { return $('<span>').text(value == null ? '' : String(value)).html(); }
     const notificationLabels = {
         assigned: 'tilldelade eller omfördelade uppgiften', unassigned: 'tog bort din tilldelning', updated: 'ändrade uppgiften',
-        step_completed: 'slutförde ett steg', pending: 'skickade uppgiften för granskning',
+        step_completed: 'slutförde ett steg', step_reopened: 'öppnade ett steg igen', pending: 'skickade uppgiften för granskning',
         rework: 'begärde komplettering', completed: 'godkände uppgiften',
         canceled: 'flyttade uppgiften till papperskorgen', restored: 'återställde uppgiften'
     };

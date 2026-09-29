@@ -1,12 +1,4 @@
 <?php
-define('login_req', true);
-
-
-
-require '../../global.php';
-
-$orderid = $_POST['orderid'] ?? 0;
-$comment = $_POST['comment'] ?? '';
-$action  = $_POST['action'] ?? '';
-
-$main->addTimeWorker('0:0', $orderid, $comment, $action);
+http_response_code(410);
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode(['success' => false, 'error' => 'Den gamla tidsvägen används inte längre.']);

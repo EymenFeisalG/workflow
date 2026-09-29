@@ -14,7 +14,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="ui/style/css/app.css" rel="stylesheet">
+    <link href="ui/style/css/app.css?v=2.12" rel="stylesheet">
     <link href="ui/style/css/general.css" rel="stylesheet">
     <link href="ui/style/css/workflow.css" rel="stylesheet">
     <link href="ui/style/css/notificationsFocus.css?v=4" rel="stylesheet">
@@ -23,7 +23,7 @@
                var workflow = true;
     </script>
     <script defer src="ui/js/general.js"></script>
-    <script src="ui/js/app.js"></script>
+    <script src="ui/js/app.js?v=2.11"></script>
     <script src="resources/tinymce/tinymce.min.js"></script>
     <script>
         var Direction = "<?php echo $_GET['dir']; ?>";

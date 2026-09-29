@@ -135,52 +135,6 @@ a
 }
 
 
-.timeWorked
-{
-    border: none;
-    margin-top: 15px;
-    float: left;
-    box-sizing: border-box;
-    bottom: 0;
-    width: 100%;
-    overflow: hidden;
-
-}
-
- .timeWorked span
-{
-    background-color: #1d1d1d;
-    padding: 15px 0;
-    height: 100px;
-    width: 50%;
-    color: #6b6b6b;
-    font-size: 10px;
-    float: left;
-    font-weight: bold;
-    text-align: center;
-    box-sizing: inherit;
-    overflow: hidden;
-}
-
-
-.timeWorked span:first-child
-{
-    border-right: 2px solid #28282B;
-}
-
- .timeWorked span h1
-{
-    margin-top: 15px;
-    line-height: 10px;
-}
-
-.timeWorked p 
-{
-   
-    font-size: 13px;
-}
-
-
 .content
 {
     padding: 10px;

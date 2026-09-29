@@ -70,10 +70,9 @@
         {
             var username = $.trim($('.form .username').val());
             var email = $.trim($('.form .email').val());
-            var salary = 0;
             var role = $.trim($('.form .role').val());
 
-            $.post('functions/addUser.php', {'username': username, 'email': email, 'role': role, 'salary': salary}, function(success)
+            $.post('functions/addUser.php', {'username': username, 'email': email, 'role': role}, function(success)
             {
                 if(success == "FIELDS_EMPTY")
                 {

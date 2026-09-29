@@ -144,45 +144,8 @@ class auth extends database
                 unset($_SESSION['addOrder']);
             }
 
-            if(isset($_SESSION['changeOrder']))
-            {
-                header("location: changeorder.php");
-            }
+            // Äldre korrigeringssessioner öppnas via den nya modalen i home.php.
        }
-    }
-
-    public function changeOrderCheck($orderId)
-    {
-        if(!isset($_SESSION['changeOrder']))
-        {
-            header('location: home.php');
-            return;
-        }
-
-        $orderId = $_SESSION['changeOrder'];
-        $order = self::query("SELECT * FROM query WHERE id = '".$orderId."'");
-
-        if($order->numrows() > 0)
-        {
-            return $order->assoc();
-        }
-        else
-        {
-            unset($_SESSION['changeOrder']);
-            header('location: home.php');
-        }
-    }
-
-    public function getCustomerSteps($orderId)
-    {
-        $steps = self::query("SELECT * FROM steps WHERE orderId = '".$orderId."'");
-
-        while($skriv = $steps->assoc())
-        {
-            ?>
-                <div class="stepCount <?php  if($skriv['completed'] == 1) echo ' disabled'; ?>"><span class="Remove"><?php echo $skriv['step']; ?></span><input class="stepByStep" value="<?php echo $skriv['desc']; ?>" type="text"></div>
-            <?php
-        }
     }
 
 
@@ -207,12 +170,11 @@ class auth extends database
         {   
             $query = $query->assoc();
 
-            $user = ['username', 'email', 'rank', 'salary', 'userid'];
+            $user = ['username', 'email', 'rank', 'userid'];
 
             $user['username'] = $query['username'];
             $user['email'] = $query['email'];
             $user['rank'] = $query['user_role'];
-            $user['salary'] = $query['hourSalary'];
             $user['userid'] = $query['id'];
  
 
@@ -257,7 +219,7 @@ class auth extends database
             if($password == $cPassword)
             {
                 $role = ($data['role'] == 'Arbetare') ? '1' : '2';
-                self::query("INSERT INTO users (username, password, email, user_role, hourSalary) VALUES ('".$data['username']."', '".$password."', '".$data['email']."', '".$role."', '".$data['salary']."')");
+                self::query("INSERT INTO users (username, password, email, user_role, hourSalary) VALUES ('".$data['username']."', '".$password."', '".$data['email']."', '".$role."', '0')");
 
                 // delete seckey
                 self::query("DELETE FROM register_users WHERE seckey = '".$seckey."'");

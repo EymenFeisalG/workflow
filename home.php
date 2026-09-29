@@ -18,7 +18,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="ui/style/css/app.css?v=2.10" rel="stylesheet">
+    <link href="ui/style/css/app.css?v=2.12" rel="stylesheet">
     <script>
         workflow = false;
         var Direction = "<?php echo $_GET['dir']; ?>";
@@ -31,14 +31,14 @@
         var TeamWorkers = <?php echo json_encode($main->getWorkersList(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
     </script>
     <link href="ui/style/css/general.css" rel="stylesheet">
-    <link href="ui/style/css/orderModal.css?v=3.1" rel="stylesheet">
-    <link href="ui/style/css/macDock.css?v=3.4" rel="stylesheet">
+    <link href="ui/style/css/orderModal.css?v=3.8" rel="stylesheet">
+    <link href="ui/style/css/macDock.css?v=3.6" rel="stylesheet">
     <link href="ui/style/css/notificationsFocus.css?v=5" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
-    <script src="ui/js/orderModal.js?v=2.16"></script>
+    <script src="ui/js/orderModal.js?v=2.21"></script>
     <script src="ui/js/macDock.js?v=2.7"></script>
-    <script src="ui/js/app.js?v=2.8"></script>
+    <script src="ui/js/app.js?v=2.11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
 
@@ -53,16 +53,16 @@
         
         </div>
 
-        <aside class="createdHistoryCard" id="createdHistoryCard" aria-label="Skapade uppdrag" aria-hidden="true">
+        <aside class="createdHistoryCard" id="createdHistoryCard" aria-label="Skapade uppgifter" aria-hidden="true">
             <div class="historyCardHeader">
                 <div class="historyCardTitle">
                     <span class="historyIcon">📋</span>
-                    <h3>Skapade uppdrag</h3>
+                    <h3>Skapade uppgifter</h3>
                     <span class="historyCountBadge" id="historyCountBadge">0</span>
                 </div>
                 <div class="historyCardActions">
                     <button type="button" class="historyRefreshBtn" id="historyRefreshBtn" title="Uppdatera historik">↻</button>
-                    <button type="button" class="historyToggleCollapseBtn" id="historyToggleCollapseBtn" aria-label="Stäng skapade uppdrag" title="Stäng">✕</button>
+                    <button type="button" class="historyToggleCollapseBtn" id="historyToggleCollapseBtn" aria-label="Stäng skapade uppgifter" title="Stäng">✕</button>
                 </div>
             </div>
 
@@ -158,19 +158,6 @@
                             <div class="dockSubmenuDivider"></div>
                         </div>
 
-                        <button type="button" class="dockSubmenuItem" id="dockWorkflowBtn" data-url="prio" role="menuitem">
-                            <svg class="dockSubmenuSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="7" height="7" rx="1"></rect>
-                                <rect x="14" y="4" width="7" height="7" rx="1"></rect>
-                                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-                                <rect x="14" y="14" width="7" height="7" rx="1"></rect>
-                            </svg>
-                            <div class="dockSubmenuItemContent">
-                                <span class="dockSubmenuItemTitle">Workflow</span>
-                                <span class="dockSubmenuItemDesc">Kanban och prioritering</span>
-                            </div>
-                        </button>
-
                         <?php if($auth->hasRight('admin')): ?>
                         <a href="admin/" class="dockSubmenuItem" role="menuitem">
                             <svg class="dockSubmenuSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -233,7 +220,8 @@
                 <?php if($auth->hasRight('add_new_order')): ?>
                 <button type="button" class="dockTextBtn dockBtnPrimary addOrder" aria-label="Skapa ny uppgift">
                     <span class="dockBtnPlus">+</span>
-                    <span>Ny uppgift</span>
+                    <span class="dockBtnLabel">Ny uppgift</span>
+                    <span class="dockDraftMobileLabel" aria-hidden="true">Utkast</span>
                 </button>
                 <?php endif; ?>
 
@@ -254,7 +242,7 @@
                 <div class="dockDivider dockUtilityDivider" role="separator"></div>
 
                 <!-- Submeny Trigger: Mer (Admin, Papperskorg, Logga ut) -->
-                <button type="button" class="dockTextBtn dockBtnMore" id="dockMoreTrigger" aria-label="Fler alternativ" aria-haspopup="true" aria-expanded="false" title="Mer (fler uppgiftskategorier, Workflow, Admin, Papperskorg, Logga ut)">
+                <button type="button" class="dockTextBtn dockBtnMore" id="dockMoreTrigger" aria-label="Fler alternativ" aria-haspopup="true" aria-expanded="false" title="Mer (fler uppgiftskategorier, Admin, Papperskorg, Logga ut)">
                     <svg class="dockSmallSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="1.5"></circle>
                         <circle cx="19" cy="12" r="1.5"></circle>
@@ -275,17 +263,17 @@
         </div>
     </div>
         <div class="modal">
-            <form class="timeForm" method="post">
+            <form class="decisionForm" method="post">
+                <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="text" name="orderid" class="orderid" value="" hidden>
                 <input type="text" name="action" class="action" value="" hidden>
                 <h5 class="modalTitle">Meddelande / Kommentar (valfritt)</h5>
                 <textarea class="content" name="comment"></textarea>
-                <input type="submit" value="Spara" class="saveTime">
-                <input type="button" class="closeTime close" value="Ångra">
+                <input type="submit" value="Spara" class="saveDecision">
+                <input type="button" class="closeDecision close" value="Ångra">
             </form>
         </div>
 
-    <?php if($auth->hasRight('add_new_order')): ?>
     <!-- Clean Paper Sheet Order Modal -->
     <div class="orderModalOverlay" id="orderModalOverlay">
         <div class="orderModalCard" role="dialog" aria-modal="true" aria-labelledby="orderModalHeading">
@@ -295,7 +283,7 @@
                 <div class="orderModalHeaderTop">
                     <div class="orderModalHeaderTitle">
                         <h2 id="orderModalHeading">Ny uppgift</h2>
-                        <span class="orderDraftBadge" id="orderDraftBadge" style="display: none;">Sparat</span>
+                        <span class="orderDraftBadge" id="orderDraftBadge" style="display: none;">Utkast sparat</span>
                     </div>
                     <button type="button" class="orderModalCloseBtn" id="orderModalCloseBtn" aria-label="Stäng">✕</button>
                 </div>
@@ -312,7 +300,6 @@
                         </button>
 
                         <button type="button" class="lastDelegatedChip" id="lastDelegatedChip" style="display: none;" title="Klicka för att snabbt tilldela">
-                            <span class="chipIcon">⚡</span>
                             <span class="chipText">Senast: <strong id="lastDelegatedName"></strong></span>
                         </button>
 
@@ -394,10 +381,11 @@
                                         <div class="orderModalGroup">
                                             <label class="orderModalLabel" for="orderAdminPass">Lösenord</label>
                                             <input type="password" id="orderAdminPass" name="company_admin_password" class="orderModalInput" placeholder="Lösenord" autocomplete="new-password">
+                                            <label class="correctionPasswordClear" id="correctionPasswordClear" hidden><input type="checkbox" id="orderClearPassword"> Rensa sparat lösenord</label>
                                         </div>
                                     </div>
                                 </details>
-                                <p class="orderContactHint">Kontaktpersoner med namn sparas automatiskt och kan väljas till fler uppgifter.</p>
+                                <p class="orderContactHint" id="orderContactHint">Kontaktpersoner med namn sparas automatiskt och kan väljas till fler uppgifter.</p>
                             </div>
                         </details>
 
@@ -437,9 +425,10 @@
                             <label class="orderModalLabel">Bifoga filer</label>
                             <div id="orderDropZone" class="dropZone">
                                 <span class="dropZoneText">Dra och släpp filer här, eller klicka för att välja</span>
-                                <input type="file" id="orderDropZoneInput" class="dropZoneInput" multiple accept="image/*">
+                                <input type="file" id="orderDropZoneInput" class="dropZoneInput" multiple accept="image/jpeg,image/png,image/gif,image/webp,application/pdf">
                             </div>
                             <div id="orderImagePreviewGrid" class="imagePreviewGrid" style="display: none;"></div>
+                            <div id="orderExistingImages" class="correctionExistingImages" hidden></div>
                         </div>
 
                     </div>
@@ -447,7 +436,7 @@
 
                 <!-- Footer Toolbar -->
                 <div class="orderModalFooter">
-                    <div class="footerStatusNote">
+                    <div class="footerStatusNote" id="orderFooterStatus">
                         <span class="statusDot"></span>
                         <span>Utkast sparas automatiskt</span>
                     </div>
@@ -462,7 +451,5 @@
             </form>
         </div>
     </div>
-    <?php endif; ?>
-
 </body>
 </html>

@@ -37,17 +37,18 @@ workflow/
 │   └── test_order_system.php
 ├── php/
 │   ├── classes/               # Kärnklasser (OOP)
-│   │   ├── admin.class.php    # Admin-operationer, ekonomi och inställningar
+│   │   ├── admin.class.php    # Användaradministration
 │   │   ├── auth.class.php     # Autentisering, sessioner och behörighetskontroll
 │   │   ├── database.class.php # Databasanslutning, escaping och PDO-querys
 │   │   ├── mailer.class.php   # E-postnotifieringar (tilldelning, färdiga steg m.m.)
-│   │   └── main.class.php     # Huvudaffärslogik: orders, kontaktpersoner, navigering
+│   │   ├── main.class.php     # Huvudaffärslogik: orders, kontaktpersoner, navigering
+│   │   └── taskCorrection.class.php # Behörig korrigering av uppgifter
 │   └── functions/             # AJAX-endpoints
 │       ├── addOrder.php       # Skapar ny uppgift med steg och bilagor
-│       ├── addWorkerTime.php  # Tidsrapportering / timlogg på uppdrag
-│       ├── changeOrder.php    # Uppdatering av befintlig uppgift
+│       ├── getOrderForEdit.php # Läser aktiv uppgift för korrigering
+│       ├── saveOrderCorrection.php # Sparar korrigerad uppgift
+│       ├── submitOrderDecision.php # Attest/komplettering
 │       ├── checkStep.php      # Avbockning av delmoment i checklistan
-│       ├── closeOrder.php     # Markerar uppgift som slutförd
 │       ├── deleteOrder.php    # Flyttar uppgift till papperskorgen
 │       ├── focusOrder.php     # Sätter/rensar enskilt uppdrag i fokus i sessionen
 │       ├── getOrders.php      # Hämtar uppdragskort asynkront baserat på filter
@@ -65,7 +66,7 @@ workflow/
 │       │   ├── general.css    # Grundtypografi och modaler
 │       │   └── orderModal.css # Pappersmodalens animationer, responsivitet och knappar
 │       └── images/            # Ikoner och logotyper
-├── changeorder.php            # Detaljredigering av befintligt uppdrag
+├── changeorder.php            # Omdirigering från gamla redigeringslänkar
 ├── global.php                 # Applikationens bootstrapping (session, auth, main, underhållskontroll)
 ├── home.php                   # Huvudvy / Dashboard med uppdragsöversikt
 ├── Maintenance.php            # Landningssida vid aktivt underhållsläge
@@ -96,7 +97,7 @@ I tabellen `privileges` mappas ett `userid` mot specifika textnycklar (`privileg
 | `admin` | Ger tillgång till administratörspanelen (`/admin/`). Kontrolleras i `admin/index.php`. |
 | `add_new_order` | Ger behörighet att skapa nya uppgifter. Styr om knappen `Ny uppgift` visas i sidomenyn och om modalen initieras. |
 | `orders_show_all` | Tillåter användaren att se alla uppdrag inom företaget, inte bara de som tilldelats användaren personligen. |
-| `changeOrder` | Ger rätt att redigera befintliga uppgifter via `changeorder.php`. |
+| `changeOrder` | Ger rätt att korrigera aktiva uppgifter som någon annan har skapat. Skaparen får alltid korrigera sin egen aktiva uppgift. |
 | `deleteOrder` | Ger rätt att kasta uppdrag i papperskorgen eller radera dem. |
 | `maintenanceLogin`| **Underhållsbehörighet**: Tillåter inloggning och arbete även när systemet är satt i underhållsläge. |
 | `all` | **Superuser-wildcard**: Ger automatiskt sant (`true`) för alla standardanrop till `$auth->hasRight($right)`. |
@@ -144,7 +145,7 @@ Systemet bygger på en relationsdatabas i MySQL:
 - **`settings`**: Globala systeminställningar sparade som nyckel/värde-par (`maintenance`, `site_name` etc.).
 
 ### Noteringar för databasen:
-1. **Ekonomimodul / `payments`**: Metoder i `admin.class.php` refererar till en tabell `payments` för utbetalningar. Om ekonomisk tracking ska användas i drift behöver denna tabell skapas i schemat.
+1. **Historiska tid- och betaldata**: Gamla databasfält behålls, men vyer och anrop för tidsrapportering och utbetalning används inte längre.
 2. **Lösenordshashning**: Befintliga konton hashas via MD5 i `database::escape($str, true)`. Nyutveckling bör migrera autentiseringen till moderna `password_hash()` med bcrypt/argon2.
 
 ---

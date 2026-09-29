@@ -463,6 +463,21 @@
                 inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
+.macDock .dockBtnPrimary.has-draft {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    border-color: #fcd34d;
+    color: #ffffff;
+}
+
+.macDock .dockBtnPrimary.has-draft:hover {
+    background: linear-gradient(135deg, #b45309, #92400e);
+    color: #ffffff;
+}
+
+.dockDraftMobileLabel {
+    display: none;
+}
+
 .dockBtnPlus {
     font-size: 0.95rem;
     line-height: 1;
@@ -771,12 +786,13 @@ button.dockTextBtn.addOrder {
     .macDock {
         display: flex;
         flex-wrap: nowrap;
-        justify-content: space-between;
+        justify-content: flex-start;
         width: 100%;
         max-width: none;
-        gap: 0.12rem;
-        padding: 0.35rem 0.4rem;
-        overflow: visible;
+        gap: 0.2rem;
+        padding: 0.55rem 0.4rem 0.35rem;
+        overflow-x: auto;
+        overflow-y: hidden;
         border-radius: 9999px;
     }
 
@@ -786,9 +802,9 @@ button.dockTextBtn.addOrder {
 
     .macDock #parentStats {
         display: flex !important;
-        flex: 1 1 auto;
+        flex: 0 0 auto;
         justify-content: center;
-        min-width: 0;
+        min-width: max-content;
         gap: 0.55rem;
     }
 
@@ -846,6 +862,20 @@ button.dockTextBtn.addOrder {
 
     .macDock .addOrder > span:not(.dockBtnPlus) {
         display: none;
+    }
+
+    .macDock button.dockTextBtn.addOrder.has-draft {
+        flex: 0 0 auto;
+        width: auto !important;
+        border-radius: 9999px;
+        padding: 0 0.65rem !important;
+        background: linear-gradient(135deg, #d97706, #b45309) !important;
+        border-color: #fcd34d !important;
+    }
+
+    .macDock .addOrder.has-draft > .dockDraftMobileLabel {
+        display: inline;
+        font-size: 0.72rem;
     }
 
     .macDock .dockBtnPlus {

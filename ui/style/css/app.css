@@ -191,7 +191,7 @@ html, body
 
 
 
-.timeForm
+.decisionForm
 {
     display: none;
     width: 800px;
@@ -200,12 +200,12 @@ html, body
     color: #FFF;
 }
 
-.timeForm .fields
+.decisionForm .fields
 {
     width: 100%;
 }
 
-.timeForm input[type="number"]
+.decisionForm input[type="number"]
 
 {
 
@@ -216,7 +216,7 @@ html, body
 
 
 
-.timeForm textarea, .timeForm input[type="number"]
+.decisionForm textarea, .decisionForm input[type="number"]
 
 {
 
@@ -230,7 +230,7 @@ html, body
 
 
 
-.timeForm textarea
+.decisionForm textarea
 
 {
     margin-top: 10px;
@@ -242,7 +242,7 @@ html, body
 
 
 
-.timeForm input[type="submit"]
+.decisionForm input[type="submit"]
 {
     background-color: #3692e2;
     border: none;
@@ -257,7 +257,7 @@ html, body
 
 
 
-.timeForm .close 
+.decisionForm .close
 {
     background-color: #e23636 !important;
 }
@@ -1450,6 +1450,50 @@ hr
 
 }
 
+/* Inline step progress */
+.Steps .step {
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 6px 8px;
+    border-radius: 8px;
+}
+.Steps .step:hover { background: #f3f7fc; }
+.Steps .stepLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    cursor: pointer;
+}
+.Steps .stepLabel:has(.checkStep:disabled) { cursor: default; }
+.Steps .stepValue {
+    margin-left: 0;
+    font-size: 16px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+.Steps .step.is-complete .stepValue {
+    color: #64748b;
+    text-decoration: line-through;
+}
+.Steps .stepStatus {
+    margin-left: auto;
+    color: #64748b;
+    font-size: 12px;
+    white-space: nowrap;
+}
+.Steps .stepStatus.is-error {
+    color: #b42318;
+    white-space: normal;
+}
+.Steps .checkStep {
+    margin: 0;
+    flex: 0 0 auto;
+    accent-color: #1d69b7;
+}
+.Steps .checkStep:disabled { cursor: default; }
+
 .descEdit
 
 {
@@ -1683,54 +1727,6 @@ hr
     background-color: #f16868;
 }
 
-.timeWorked
-{
-    border: none;
-    margin-top: 15px;
-    float: left;
-    box-sizing: border-box;
-    bottom: 0;
-    width: 100%;
-    overflow: hidden;
-
-}
-
- .timeWorked span
-{
-    background-color: #1d1d1d;
-    padding: 15px 0;
-    height: 100px;
-    width: 50%;
-    color: #6b6b6b;
-    font-size: 10px;
-    float: left;
-    font-weight: bold;
-    text-align: center;
-    box-sizing: inherit;
-    overflow: hidden;
-}
-
-
-.timeWorked span:first-child
-{
-    border-right: 2px solid #28282B;
-}
-
- .timeWorked span h1
-{
-    margin-top: 15px;
-    line-height: 10px;
-}
-
-.timeWorked p 
-{
-   
-    font-size: 13px;
-}
-
-
-
-
 .latestLogin
 {
     float: left;
@@ -1764,4 +1760,8 @@ hr
   width: 100%;
   height: 300px;
   padding: 10px;
+}
+.order.selectedCreatedOrder {
+    outline: 3px solid #2563eb;
+    outline-offset: 2px;
 }
