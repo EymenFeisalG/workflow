@@ -685,6 +685,9 @@
             $('#statCompleted').text(stats.completed || 0);
             $('#historyCountBadge').text(stats.total || 0);
             $('#historyFloatBadge').text(stats.total || 0);
+            $('#historyDelegatedBadge').text(stats.delegated || 0);
+            $('#historyOngoingBadge').text(stats.ongoing || 0);
+            $('#historyCompletedBadge').text(stats.completed || 0);
 
             const $list = $('#historyList');
             $list.empty();
@@ -747,6 +750,11 @@
     };
 
     function initHistoryCard() {
+        function setHistoryOpen(open) {
+            $('#createdHistoryCard').toggleClass('is-open', open).attr('aria-hidden', open ? 'false' : 'true');
+            $('#historyTabTrigger').attr('aria-expanded', open ? 'true' : 'false');
+        }
+
         $('#historyRefreshBtn').on('click', function () {
             $(this).css('transform', 'rotate(360deg)');
             setTimeout(() => $(this).css('transform', ''), 400);
@@ -754,13 +762,33 @@
         });
 
         $('#historyToggleCollapseBtn').on('click', function () {
-            const $card = $('#createdHistoryCard');
-            $card.toggleClass('collapsed');
-            $(this).text($card.hasClass('collapsed') ? '+' : '−');
+            setHistoryOpen(false);
+            $('#historyTabTrigger').trigger('focus');
         });
 
-        $('#historyFloatTrigger').on('click', function () {
-            $('#createdHistoryCard').toggleClass('mobile-open');
+        $('#historyTabTrigger').on('click', function (event) {
+            event.stopPropagation();
+            const open = !$('#createdHistoryCard').hasClass('is-open');
+            if (open) {
+                $('#notificationPopover').prop('hidden', true);
+                $('#notificationBell').attr('aria-expanded', 'false');
+            }
+            setHistoryOpen(open);
+        });
+
+        $('#dockMoreTrigger, #dockSpotlightTrigger').on('click', function () {
+            setHistoryOpen(false);
+        });
+
+        $(document).on('click', function (event) {
+            if (!$(event.target).closest('#createdHistoryCard, #historyTabTrigger').length) setHistoryOpen(false);
+        });
+
+        $(document).on('keydown', function (event) {
+            if (event.key === 'Escape' && $('#createdHistoryCard').hasClass('is-open')) {
+                setHistoryOpen(false);
+                $('#historyTabTrigger').trigger('focus');
+            }
         });
 
         $('#historyViewAllBtn').on('click', function () {
@@ -769,7 +797,7 @@
                 $('#parentStats span').removeClass('active');
                 $('[data-url="created_by_me"]').addClass('active');
             }
-            $('#createdHistoryCard').removeClass('mobile-open');
+            setHistoryOpen(false);
         });
     }
 

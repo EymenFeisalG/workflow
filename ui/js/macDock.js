@@ -150,9 +150,6 @@
             closeSubmenu();
         });
 
-        $popover.on('click', '#historyFloatTrigger', function () {
-            closeSubmenu();
-        });
     }
 
 })(jQuery);

@@ -115,12 +115,15 @@
    Pops up smoothly above the dock with frosted glass styling
    -------------------------------------------------------------------------- */
 .dockSubmenuPopover {
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    left: 50%;
     width: 100%;
     max-width: 17.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(0.75rem) scale(0.96);
+    transform: translate(-50%, 0.75rem) scale(0.96);
     transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                 transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                 visibility 0.22s ease;
@@ -131,7 +134,7 @@
 .dockSubmenuPopover.active {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0) scale(1);
+    transform: translate(-50%, 0) scale(1);
 }
 
 .dockSubmenuInner {
@@ -631,10 +634,17 @@ button.dockTextBtn.addOrder {
     }
 
     .dockSubmenuPopover {
+        left: auto;
+        right: 1.5rem;
         align-self: flex-end;
-        margin-right: 1.5rem;
+        margin-right: 0;
         max-width: 18.5rem;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0;
+        transform: translateY(0.75rem) scale(0.96);
+    }
+
+    .dockSubmenuPopover.active {
+        transform: translateY(0) scale(1);
     }
 
     .macDock {

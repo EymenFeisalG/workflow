@@ -31,12 +31,12 @@
         var TeamWorkers = <?php echo json_encode($main->getWorkersList(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
     </script>
     <link href="ui/style/css/general.css" rel="stylesheet">
-    <link href="ui/style/css/orderModal.css?v=2.9" rel="stylesheet">
-    <link href="ui/style/css/macDock.css?v=3.2" rel="stylesheet">
-    <link href="ui/style/css/notificationsFocus.css?v=4" rel="stylesheet">
+    <link href="ui/style/css/orderModal.css?v=3.1" rel="stylesheet">
+    <link href="ui/style/css/macDock.css?v=3.4" rel="stylesheet">
+    <link href="ui/style/css/notificationsFocus.css?v=5" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
-    <script src="ui/js/orderModal.js?v=2.8"></script>
+    <script src="ui/js/orderModal.js?v=2.16"></script>
     <script src="ui/js/macDock.js?v=2.7"></script>
     <script src="ui/js/app.js?v=2.8"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -53,9 +53,6 @@
         
         </div>
 
-        <button type="button" class="historyTabTrigger" id="historyTabTrigger" aria-controls="createdHistoryCard" aria-expanded="false">
-            <span aria-hidden="true">📋</span> Skapade uppdrag <span class="historyFloatBadge" id="historyFloatBadge">0</span>
-        </button>
         <aside class="createdHistoryCard" id="createdHistoryCard" aria-label="Skapade uppdrag" aria-hidden="true">
             <div class="historyCardHeader">
                 <div class="historyCardTitle">
@@ -217,6 +214,19 @@
                 </div>
             </div>
 
+            <div class="historyQuickBar">
+                <button type="button" class="historyTabTrigger" id="historyTabTrigger" aria-controls="createdHistoryCard" aria-expanded="false">
+                    <span class="historySummaryItem historySummaryPrimary"><span class="historySummaryLabel">Skapade</span><span class="historyFloatBadge" id="historyFloatBadge">0</span></span>
+                    <span class="historySummaryItem"><span class="historySummaryLabel">Delegerade</span><span class="historySummaryBadge" id="historyDelegatedBadge">0</span></span>
+                    <span class="historySummaryItem"><span class="historySummaryLabel">Pågår</span><span class="historySummaryBadge" id="historyOngoingBadge">0</span></span>
+                    <span class="historySummaryItem"><span class="historySummaryLabel">Klara</span><span class="historySummaryBadge" id="historyCompletedBadge">0</span></span>
+                </button>
+                <button type="button" class="dockTextBtn notificationBell" id="notificationBell" aria-label="Notifikationer" aria-expanded="false" aria-controls="notificationPopover" title="Notifikationer">
+                    <svg class="dockSmallSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+                    <span id="notificationCount" class="notificationCount" hidden>0</span>
+                </button>
+            </div>
+
             <!-- Floating Dock Shelf (Text-based, compact height) -->
             <div class="macDock textDock" id="macDock" role="toolbar">
                 <!-- Primär action: + Ny uppgift -->
@@ -244,7 +254,7 @@
                 <div class="dockDivider dockUtilityDivider" role="separator"></div>
 
                 <!-- Submeny Trigger: Mer (Admin, Papperskorg, Logga ut) -->
-                <button type="button" class="dockTextBtn dockBtnMore" id="dockMoreTrigger" aria-label="Fler alternativ" aria-haspopup="true" aria-expanded="false" title="Mer (fler uppgiftskategorier, Workflow, Skapade, Admin, Papperskorg, Logga ut)">
+                <button type="button" class="dockTextBtn dockBtnMore" id="dockMoreTrigger" aria-label="Fler alternativ" aria-haspopup="true" aria-expanded="false" title="Mer (fler uppgiftskategorier, Workflow, Admin, Papperskorg, Logga ut)">
                     <svg class="dockSmallSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="1.5"></circle>
                         <circle cx="19" cy="12" r="1.5"></circle>
@@ -253,10 +263,6 @@
                     <span>Mer</span>
                 </button>
             </div>
-            <button type="button" class="dockTextBtn notificationBell" id="notificationBell" aria-label="Notifikationer" aria-expanded="false" aria-controls="notificationPopover" title="Notifikationer">
-                <svg class="dockSmallSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
-                <span id="notificationCount" class="notificationCount" hidden>0</span>
-            </button>
         </nav>
    </div>
 

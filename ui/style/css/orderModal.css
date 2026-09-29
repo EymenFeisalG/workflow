@@ -1209,30 +1209,109 @@
     to { transform: rotate(360deg); }
 }
 
-/* ==========================================================================
-   Delegation History Card (Dashboard Widget)
-   ========================================================================== */
+/* Summary and notifications share a centered row above the main menu. */
+.historyQuickBar {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    max-width: calc(100vw - 1rem);
+    margin-bottom: 0.4rem;
+    pointer-events: auto;
+}
+
+.historyQuickBar::before {
+    content: "";
+    flex: 0 0 2.55rem;
+}
+
+.historyTabTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    min-height: 2.55rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 9999px;
+    background: #fff;
+    color: #0f172a;
+    box-shadow: 0 0.25rem 1rem rgba(15, 23, 42, 0.16);
+    font: 700 0.75rem/1.25 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.historySummaryItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.historySummaryItem + .historySummaryItem {
+    padding-left: 0.75rem;
+    border-left: 1px solid #e2e8f0;
+}
+
+.historySummaryBadge,
+.historyFloatBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    min-height: 1.25rem;
+    padding: 0 0.3rem;
+    border-radius: 9999px;
+    background: #e8eef7;
+    color: #334155;
+    font-size: 0.69rem;
+    font-weight: 800;
+}
+
+.historySummaryPrimary .historyFloatBadge {
+    background: #2563eb;
+    color: #fff;
+}
+
+.historyTabTrigger:hover,
+.historyTabTrigger[aria-expanded="true"] {
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+.historyTabTrigger:focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: 2px;
+}
+
 .createdHistoryCard {
-    width: 20rem;
-    max-width: 22rem;
+    position: fixed;
+    left: 50%;
+    bottom: calc(8.9rem + env(safe-area-inset-bottom, 0px));
+    z-index: 9990;
+    width: min(21rem, calc(100vw - 2rem));
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 0.875rem;
-    box-shadow: 0 0.125rem 0.5rem rgba(15, 23, 42, 0.05);
+    box-shadow: 0 1rem 3rem rgba(15, 23, 42, 0.2);
     display: flex;
     flex-direction: column;
-    margin: 1.25rem 1.25rem 1.25rem 0;
-    flex-shrink: 0;
-    height: fit-content;
-    max-height: calc(100vh - 2.5rem);
+    max-height: calc(100dvh - 10rem - env(safe-area-inset-bottom, 0px));
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: #0f172a;
-    transition: all 0.25s ease;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, 0.75rem) scale(0.97);
+    transform-origin: bottom center;
+    transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s ease;
 }
 
-.createdHistoryCard.collapsed .historyCardBody {
-    display: none;
+.createdHistoryCard.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translate(-50%, 0) scale(1);
 }
 
 .historyCardHeader {
@@ -1434,81 +1513,45 @@
     color: #0f172a;
 }
 
-/* Floating trigger on mobile screens */
-.historyFloatTrigger {
-    display: none;
-    position: fixed;
-    bottom: max(7rem, calc(6.5rem + env(safe-area-inset-bottom, 0px)));
-    right: 1rem;
-    background: #0f172a;
-    color: #ffffff;
-    border: none;
-    border-radius: 9999px;
-    padding: 0.6rem 1rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    box-shadow: 0 0.5rem 1.5rem rgba(15, 23, 42, 0.25);
-    z-index: 8900;
-    cursor: pointer;
-    align-items: center;
-    gap: 0.45rem;
-}
-
-.dockSubmenuList .historyFloatTrigger {
-    position: static;
-    inset: auto;
-    z-index: auto;
-    width: 100%;
-    justify-content: flex-start;
-    padding: 0.5rem 0.75rem;
-    border: 0;
-    border-radius: 0.6rem;
-    background: transparent;
-    box-shadow: none;
-    color: #e2e8f0;
-    font: inherit;
-    text-align: left;
-}
-
-.dockSubmenuList .historyFloatTrigger:hover {
-    background: rgba(255, 255, 255, 0.12);
-}
-
-.historyFloatBadge {
-    background: #2563eb;
-    color: #fff;
-    font-size: 0.7rem;
-    padding: 0.1rem 0.4rem;
-    border-radius: 9999px;
-}
-
-@media (max-width: 64rem) {
+@media (max-width: 700px) {
     .createdHistoryCard {
-        position: fixed;
-        bottom: max(7rem, calc(6.5rem + env(safe-area-inset-bottom, 0px)));
-        right: 1rem;
-        width: 20rem;
-        max-width: calc(100vw - 2rem);
-        z-index: 8800;
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-        transform: translateY(1.5rem) scale(0.96);
-        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-                    opacity 0.25s ease,
-                    visibility 0.25s ease;
-        display: flex;
+        bottom: calc(7.6rem + env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - 8.5rem - env(safe-area-inset-bottom, 0px));
+    }
+}
+
+@media (max-width: 480px) {
+    .historyTabTrigger {
+        display: grid;
+        grid-template-columns: repeat(2, max-content);
+        gap: 0.2rem 0.7rem;
+        padding: 0.35rem 0.7rem;
     }
 
-    .createdHistoryCard.mobile-open {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
-        transform: translateY(0) scale(1);
+    .historySummaryItem + .historySummaryItem {
+        padding-left: 0;
+        border-left: 0;
     }
 
-    .historyFloatTrigger {
-        display: inline-flex;
+    .historyQuickBar {
+        margin-bottom: 0.3rem;
+    }
+
+    .createdHistoryCard {
+        bottom: calc(8.7rem + env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - 9.5rem - env(safe-area-inset-bottom, 0px));
+    }
+}
+
+@media (max-width: 360px) {
+    .historyQuickBar::before {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .createdHistoryCard {
+        transition: none;
     }
 }
 
