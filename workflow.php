@@ -5,10 +5,7 @@
 
    $auth->userLoginCheck();
 
-   if(!isset($_SESSION['focusOrder']))
-        $_GET['dir'] = $dir = $auth->setDir();
-    else
-        $_GET['dir'] = $dir = $_SESSION['focusOrder']['dir'];
+   $_GET['dir'] = $dir = $auth->setDir();
 
 ?>
 
@@ -20,6 +17,7 @@
     <link href="ui/style/css/app.css" rel="stylesheet">
     <link href="ui/style/css/general.css" rel="stylesheet">
     <link href="ui/style/css/workflow.css" rel="stylesheet">
+    <link href="ui/style/css/notificationsFocus.css?v=4" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script>
                var workflow = true;
@@ -29,7 +27,7 @@
     <script src="resources/tinymce/tinymce.min.js"></script>
     <script>
         var Direction = "<?php echo $_GET['dir']; ?>";
-        var orderInFocus = "<?php if(isset($_SESSION['focusOrder'])) echo 'true'; else echo 'false'; ?>";
+        var WorkflowCsrf = <?php echo json_encode($_SESSION['csrf_token']); ?>;
 
     </script>
 
@@ -83,8 +81,7 @@
 
 
 
-    <div hidden id="focusOrder"><?php if(isset($_SESSION['focusOrder'])) echo $_SESSION['focusOrder']['orderid']; ?></div>
-        <div class="modalFocus" <?php if(isset($_SESSION['focusOrder'])) echo 'style="display: block;'; ?>></div>
+    <div class="focusOverlay" id="focusOverlay" hidden><div class="focusShell" role="dialog" aria-modal="true" aria-labelledby="focusTitle"><div class="focusHeader"><strong id="focusTitle">Fokusläge</strong><button type="button" id="focusClose">Stäng ✕</button></div><div class="focusContent" id="focusContent"></div></div></div>
         <div class="modal">
              <form class="timeForm" method="post">
                 <input type="text" name="orderid" class="orderid" value="" hidden>

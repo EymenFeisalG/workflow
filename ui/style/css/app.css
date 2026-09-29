@@ -928,12 +928,12 @@ hr
     line-height: 1;
 }
 
-.orderAccessDetails[open] summary {
+.orderAccessDetails[open] > summary {
     border-bottom: 1px solid #e2eaf3;
     background: #f0f6ff;
 }
 
-.orderAccessDetails[open] summary::after {
+.orderAccessDetails[open] > summary::after {
     content: "−";
 }
 
@@ -1038,6 +1038,40 @@ hr
     float: left;
     font-size: 14px;
     margin-top: 3px;
+}
+
+.order .orderAttribution {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 1rem;
+    width: calc(100% - 10px);
+    color: #475569;
+    line-height: 1.4;
+}
+
+.orderAttributionPerson {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.orderAttributionPerson svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex: 0 0 auto;
+    color: #2480cf;
+}
+
+.orderAttributionPerson strong {
+    color: #1e293b;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.orderAttributionDate {
+    color: #64748b;
 }
 
 

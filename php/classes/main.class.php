@@ -92,13 +92,32 @@ class main extends database
 
     public function focusOrder($orderId, $dir = '')
     {
-        if(!isset($_SESSION['focusOrder']))
-        {
-            $_SESSION['focusOrder']['orderid'] = $orderId;
-            $_SESSION['focusOrder']['dir'] = $dir;
+        // Kept as a compatibility entrypoint for older callers.
+        $userId = (int)($_SESSION['user']['userid'] ?? 0);
+        if ($userId > 0) $this->notifications()->setFocus($userId, (int)$orderId, $this->hasRight('orders_show_all'));
+    }
+
+    private function notifications(): TaskNotifications
+    {
+        return new TaskNotifications(self::$mysql);
+    }
+
+    private function notifyOrder(int $orderId, string $event, string $detail = '', array $extra = []): void
+    {
+        $this->notifications()->emit($orderId, (int)($_SESSION['user']['userid'] ?? 0), $event, $detail, $extra);
+    }
+
+    private function taskTransaction(callable $operation)
+    {
+        self::$mysql->begin_transaction();
+        try {
+            $result = $operation();
+            self::$mysql->commit();
+            return $result;
+        } catch (Throwable $error) {
+            self::$mysql->rollback();
+            throw $error;
         }
-        else
-            unset($_SESSION['focusOrder']);
     }
 
     public function getSavedCustomersData($id)
@@ -182,7 +201,11 @@ class main extends database
 
     public function restoreOrder($id)
     {
-        self::query("UPDATE query SET status = 'ongoing' WHERE status = 'canceled' AND id='".$id."' LIMIT 1");
+        $id = (int)$id;
+        $this->taskTransaction(function () use ($id) {
+            self::query("UPDATE query SET status = 'ongoing' WHERE status = 'canceled' AND id='".$id."' LIMIT 1");
+            if (self::$mysql->affected_rows > 0) $this->notifyOrder($id, 'restored');
+        });
         echo $id;
     }
 
@@ -193,34 +216,23 @@ class main extends database
 
     public function addTimeWorker($time, $id, $orderDesc, $action)
     {
-        $orderId = self::escape($id);
+        $orderId = (int)$id;
+        $notificationDetail = trim(strip_tags((string)$orderDesc));
         $orderDesc = self::escape($orderDesc) ?? 'ingen beskrivning...';
 
         if($action == "deny")
         {
-            self::query("UPDATE query SET `status` = 'rework', messageToDev = '".$orderDesc."' WHERE id = '".$orderId."'");
+            $this->taskTransaction(function () use ($orderId, $orderDesc, $notificationDetail) {
+                self::query("UPDATE query SET `status` = 'rework', messageToDev = '".$orderDesc."' WHERE id = '".$orderId."'");
+                if (self::$mysql->affected_rows > 0) $this->notifyOrder($orderId, 'rework', $notificationDetail);
+            });
             return;
         }
         
-        self::query("UPDATE query SET `status` = 'pending' WHERE id = '".$orderId."'");
-        
-        $query = self::query("SELECT `query`.*, users.email, users.username  FROM query INNER JOIN users ON (query.creator = users.id) WHERE `query`.id='".$orderId."'")->assoc();
-
-        if(!empty($query['email']))
-        {
-            $mailer = new Mailer($this->mailServer);
-
-            if($orderDesc !='')
-                $more = 'Meddelande av '.$_SESSION['user']['username']. ': ' .$orderDesc;
-            else
-                $more = '';
-
-            $message = 'Hej '.$query['username'].'! '.$_SESSION['user']['username'].' är nu färdig med uppgiften (' . $query['Name'] .').<br><br>' . $more;
-            $subject = 'En ny uppgift redo att attesteras';
-            $email = $query['email'];
-            
-            $mailer->sendEmail($email, $subject, $message);
-        }
+        $this->taskTransaction(function () use ($orderId, $notificationDetail) {
+            self::query("UPDATE query SET `status` = 'pending' WHERE id = '".$orderId."'");
+            if (self::$mysql->affected_rows > 0) $this->notifyOrder($orderId, 'pending', $notificationDetail);
+        });
 
         echo json_encode(['status' => 'success']);
     }
@@ -228,9 +240,14 @@ class main extends database
 
     public function acceptOrder($id)
     {
-
-        $id = self::escape($id);
-        self::query("UPDATE query SET `status` = 'completed' WHERE id = '".$id."' LIMIT 1");
+        $id = (int)$id;
+        $this->taskTransaction(function () use ($id) {
+            self::query("UPDATE query SET `status` = 'completed' WHERE id = '".$id."' LIMIT 1");
+            if (self::$mysql->affected_rows > 0) {
+                $this->notifyOrder($id, 'completed');
+                $this->notifications()->clearFocusForOrder($id);
+            }
+        });
 
     }
 
@@ -238,8 +255,14 @@ class main extends database
     {
         if(!self::hasRight('deleteOrder')) return;
 
-        $id = self::escape($id);
-        self::query("UPDATE query SET `status` = 'canceled' WHERE id = '".$id."' LIMIT 1");
+        $id = (int)$id;
+        $this->taskTransaction(function () use ($id) {
+            self::query("UPDATE query SET `status` = 'canceled' WHERE id = '".$id."' LIMIT 1");
+            if (self::$mysql->affected_rows > 0) {
+                $this->notifyOrder($id, 'canceled');
+                $this->notifications()->clearFocusForOrder($id);
+            }
+        });
 
     }
 
@@ -280,7 +303,7 @@ class main extends database
 
     <div id="parentStats" class="dockStatsGroup">
         <?php if($this->hasRight('orders_show_all')): ?>
-        <a class="dockItemLink">
+        <a class="dockItemLink dockItemAll">
             <span data-url="all" class="dockTextTab badge dockFilterAll" role="button" tabindex="0">
                 <span class="dockTabText">Alla</span>
                 <?php if($all > 0): ?><span class="dockBadge badgeAll"><?php echo $all; ?></span><?php endif; ?>
@@ -288,35 +311,35 @@ class main extends database
         </a>
         <?php endif; ?>
 
-        <a class="dockItemLink">
+        <a class="dockItemLink dockItemOngoing">
             <span data-url="ongoing" class="dockTextTab badge dockFilterOngoing" role="button" tabindex="0">
                 <span class="dockTabText">Mina</span>
                 <?php if($ongoing > 0): ?><span class="dockBadge badgeOngoing"><?php echo $ongoing; ?></span><?php endif; ?>
             </span>
         </a>
 
-        <a class="dockItemLink">
+        <a class="dockItemLink dockItemAsap">
             <span data-url="asap" class="dockTextTab badge dockFilterAsap" role="button" tabindex="0">
                 <span class="dockTabText">Akut</span>
                 <?php if($asap > 0): ?><span class="dockBadge badgeAsap"><?php echo $asap; ?></span><?php endif; ?>
             </span>
         </a>
 
-        <a class="dockItemLink">
+        <a class="dockItemLink dockItemPending">
             <span data-url="pending" class="dockTextTab badge dockFilterPending" role="button" tabindex="0">
                 <span class="dockTabText">Granskas</span>
                 <?php if($pending > 0): ?><span class="dockBadge badgePending"><?php echo $pending; ?></span><?php endif; ?>
             </span>
         </a>
 
-        <a class="dockItemLink">
+        <a class="dockItemLink dockItemRework">
             <span data-url="rework" class="dockTextTab badge dockFilterRework" role="button" tabindex="0" aria-label="Kompletteras">
-                <span class="dockTabText">Kompl.</span>
+                <span class="dockTabText">Kompletteras</span>
                 <?php if($rework > 0): ?><span class="dockBadge badgeRework"><?php echo $rework; ?></span><?php endif; ?>
             </span>
         </a>
 
-        <a class="dockItemLink">
+        <a class="dockItemLink dockItemCompleted">
             <span data-url="completed" class="dockTextTab badge dockFilterCompleted" role="button" tabindex="0">
                 <span class="dockTabText">Godkända</span>
                 <?php if($completed > 0): ?><span class="dockBadge badgeCompleted"><?php echo $completed; ?></span><?php endif; ?>
@@ -335,6 +358,9 @@ class main extends database
         if($company == '')
             return false;
 
+        $orderid = (int)$orderid;
+        $asap = $asap === 'asap' ? 'asap' : 'normal';
+
         $company = self::escape($company);
         $domain = self::escape($domain);
         $admin = self::escape($admin);
@@ -347,7 +373,11 @@ class main extends database
         $message = self::escape($messageToDev);
         $date = date("Y-m-d H:i");
 
-        self::query("
+        return $this->taskTransaction(function () use ($orderid, $company, $domain, $desc, $worker, $admin, $password, $contactName, $contactOrg, $contactDetails, $asap) {
+            $previous = $this->notifications()->order($orderid, true);
+            if (!$previous) return false;
+            $oldWorker = (int)$previous['worker_name_id'];
+            self::query("
 
             UPDATE query
                 SET Name = '".$company."', 
@@ -364,6 +394,19 @@ class main extends database
                 WHERE id = '".$orderid."'
         ");
 
+            if (self::$mysql->affected_rows > 0) {
+                $newWorker = (int)$worker;
+                if ($oldWorker !== $newWorker) {
+                    $this->notifyOrder($orderid, 'assigned');
+                    if ($oldWorker !== (int)$previous['creator']) {
+                        $this->notifications()->emitTo($orderid, (int)($_SESSION['user']['userid'] ?? 0), 'unassigned', '', [$oldWorker]);
+                    }
+                } else {
+                    $this->notifyOrder($orderid, 'updated');
+                }
+            }
+            return true;
+        });
     }
 
     public function getImg($orderid)
@@ -380,33 +423,22 @@ class main extends database
 
     public function checkStep($stepid, $stepMsg)
     {
-        $myId = $_SESSION['user']['userid'];
-        // check if is mine, orderid 
-        $query = self::query("SELECT `query`.`Name`FROM steps INNER JOIN `query`ON (steps.orderId = `query`.id) WHERE `query`.worker_name_id = '".$myId."' AND steps.id = '".$stepid."'");
-        
-       
-        if($query->numrows() == 0)
-        {
-            echo 'notMine';
-            return;
-        }
-        
-
-        self::query("UPDATE steps SET completed = '1' WHERE id = '".$stepid."'");
-
-        $getEmail = self::query("SELECT email FROM users JOIN steps ON users.id = steps.creator WHERE steps.id = '".$stepid."' LIMIT 1")->assoc();
-        $message = $_SESSION['user']['username'] . " har checkat av (" . $stepMsg . ") ifrån listan";
-        $subject = 'En uppgift blev nyss klar';
-        $email = $getEmail['email'];
-        
-        $mailer = new Mailer($this->mailServer);
-
-        $mailer->sendEmail($email, $subject, $message);
+        $myId = (int)($_SESSION['user']['userid'] ?? 0);
+        $stepid = (int)$stepid;
+        $allowed = $this->taskTransaction(function () use ($myId, $stepid) {
+            $query = self::query("SELECT steps.orderId, steps.`desc`, steps.completed+0 AS completed FROM steps INNER JOIN `query` ON steps.orderId = `query`.id WHERE `query`.worker_name_id = '".$myId."' AND steps.id = '".$stepid."' LIMIT 1 FOR UPDATE");
+            if ($query->numrows() == 0) return false;
+            $step = $query->assoc();
+            self::query("UPDATE steps SET completed = b'1' WHERE id = '".$stepid."' AND completed = b'0'");
+            if (self::$mysql->affected_rows > 0) $this->notifyOrder((int)$step['orderId'], 'step_completed', $step['desc']);
+            return true;
+        });
+        if (!$allowed) echo 'notMine';
     }
 
     public function getSteps($orderId)
     {
-        $query = self::query("SELECT * FROM steps WHERE orderId = '".$orderId."'");
+        $query = self::query("SELECT steps.*, completed+0 AS completed FROM steps WHERE orderId = '".(int)$orderId."'");
 
         if($query->numrows() > 0)
         
@@ -442,6 +474,7 @@ class main extends database
         else
             $search = "SELECT query.*, users.username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE (`query`.`Name` LIKE '".$string."%' OR `query`.`Hostname` LIKE '".$string."%') AND NOT status = 'canceled' AND worker_name_id='".$myId."' ORDER BY `query`.id DESC";
 
+        $search = str_replace('query.*, users.username,', 'query.*, users.username, (SELECT creator_user.username FROM users AS creator_user WHERE creator_user.id = query.creator) AS creator_username,', $search);
         $query = self::query($search);
 
         if($query->numrows() == 0)
@@ -465,9 +498,7 @@ class main extends database
            <div class="info">
                 <div class="order_desc">
                     <input type="text" value="<?php echo $skriv['Name']; ?>" class="nameEdit">
-                    <h5 class="name"><?php echo '<span class="orderId"># '.$skriv['queryid'].'</span> <img class="icon" src="ui/style/images/icons/User-blue-icon.png">'. $skriv['Name']; ?></h5>
-                    <input type="text" value="<?php echo $skriv['Hostname']; ?>" class="hostEdit">
-                     <h5 class="hostname"><a  target="_blank" href="<?php echo $skriv['Hostname']; ?>"><?php echo '<img class="icon" src="ui/style/images/icons/Internet-icon.png">' .$skriv['Hostname']; ?></a></h5>
+                    <h5 class="name"><?php echo '<span class="orderId"># '.$skriv['queryid'].'</span> '. htmlspecialchars($skriv['Name'], ENT_QUOTES, 'UTF-8'); ?></h5>
                     </div> 
 
       
@@ -563,7 +594,7 @@ class main extends database
            <?php 
                 if($skriv['Path'] != 'NONE') echo '<div id="imgArea"><img data-path="'.$skriv['Path'].'" class="icon openGallery" src="ui/style/images/icons/galleryIcon.png"></div>';
           ?>
-           <p class="date"><?php echo '<img class="icon" src="ui/style/images/icons/worker.png"> '.$skriv['username'] . ' '. $skriv['date']; ?></p>             
+           <?php $this->renderOrderAttribution($skriv); ?>
        </div>
                                 
             <?php
@@ -575,7 +606,7 @@ class main extends database
 
 
 
-    public function listOrders($category)
+    public function listOrders($category, $focusOrderId = 0)
     {
 
         $myId = $_SESSION['user']['userid'];
@@ -584,6 +615,17 @@ class main extends database
 
         switch($category)
         {
+            case 'focus':
+                $focus = $this->notifications()->getFocus((int)$myId, $this->hasRight('orders_show_all'));
+                if (!$focus || (int)$focus['id'] !== (int)$focusOrderId) { echo 'empty'; return false; }
+                $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON query.worker_name_id = users.id WHERE query.id = '".(int)$focusOrderId."' LIMIT 1";
+            break;
+
+            case 'single':
+                $single = $this->notifications()->order((int)$focusOrderId);
+                if (!$single || !$this->notifications()->canAccess($single, (int)$myId, $this->hasRight('orders_show_all'))) { echo 'empty'; return false; }
+                $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON query.worker_name_id = users.id WHERE query.id = '".(int)$focusOrderId."' LIMIT 1";
+            break;
             case 'prio':
 
                 if($this->hasRight('orders_show_all'))
@@ -644,6 +686,7 @@ class main extends database
             break;
         }
 
+        $string = str_replace('query.*, users.username,', 'query.*, users.username, (SELECT creator_user.username FROM users AS creator_user WHERE creator_user.id = query.creator) AS creator_username,', $string);
         $query = self::query($string);
 
         $colors = ['ongoing' => 'orange', 'completed' => 'green', 'pending' => 'purple', 'canceled' => 'gray', 'rework' => '#1ebab4'];
@@ -666,13 +709,12 @@ class main extends database
             
             ?>
 
-       <div data-orderId="<?php echo $skriv['queryid']; ?>" <?php echo 'style="border-right: 2px solid '.$color.';"'; ?> class="order<?php if(isset($_SESSION['focusOrder'])){if($_SESSION['focusOrder']['orderid'] == $skriv['queryid']) echo ' orderFocus';} ?>">
+       <div data-orderId="<?php echo $skriv['queryid']; ?>" <?php echo 'style="border-right: 2px solid '.$color.';"'; ?> class="order">
            
            <div class="info">
                 <div class="order_desc">
                     <input type="text" value="<?php echo $skriv['Name']; ?>" class="nameEdit">
-                    <h5 class="name"><?php echo '<span class="orderId"># '.$skriv['queryid'].'</span> <img class="icon" src="ui/style/images/icons/User-blue-icon.png">'. $skriv['Name']; ?></h5>
-                     <h5 class="hostname"><a  target="_blank" href="<?php echo 'https://www.'.$skriv['Hostname']; ?>"><?php echo '<img class="icon" src="ui/style/images/icons/Internet-icon.png">' .$skriv['Hostname']; ?></a></h5>
+                    <h5 class="name"><?php echo '<span class="orderId"># '.$skriv['queryid'].'</span> '. htmlspecialchars($skriv['Name'], ENT_QUOTES, 'UTF-8'); ?></h5>
                     </div> 
 
 
@@ -776,7 +818,7 @@ class main extends database
                 if($skriv['Path'] != 'NONE') echo '<div id="imgArea"><img data-path="'.$skriv['Path'].'" class="icon openGallery" src="ui/style/images/icons/galleryIcon.png"></div>';
           ?>
 
-           <p class="date"><?php echo '<img class="icon" src="ui/style/images/icons/worker.png"> '.$skriv['username'] . ' '. $skriv['date']; ?></p>             
+           <?php $this->renderOrderAttribution($skriv); ?>
        </div>
                                 
             <?php
@@ -786,6 +828,26 @@ class main extends database
 
         return true;
 
+    }
+
+    private function renderOrderAttribution(array $order): void
+    {
+        $creator = htmlspecialchars($order['creator_username'] ?: 'Okänd användare', ENT_QUOTES, 'UTF-8');
+        $recipient = htmlspecialchars($order['username'] ?: 'Okänd användare', ENT_QUOTES, 'UTF-8');
+        $date = htmlspecialchars($order['date'] ?? '', ENT_QUOTES, 'UTF-8');
+        ?>
+        <p class="date orderAttribution">
+            <span class="orderAttributionPerson">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9z"/><path d="M13 3v7h7M12 13v6m-3-3h6"/></svg>
+                <span>Skapad av <strong><?php echo $creator; ?></strong></span>
+            </span>
+            <span class="orderAttributionPerson">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/></svg>
+                <span>Skickad till <strong><?php echo $recipient; ?></strong></span>
+            </span>
+            <span class="orderAttributionDate"><?php echo $date; ?></span>
+        </p>
+        <?php
     }
 
     public function formatDomain($string)
@@ -803,6 +865,7 @@ class main extends database
     {
         if($company == '')
             return false;
+        $asap = $asap === 'asap' ? 'asap' : 'normal';
 
         if($admin == "") $admin = 'tomt';
         if($password == "") $password = 'tomt';
@@ -822,7 +885,8 @@ class main extends database
         $date = date("Y-m-d H:i");
         
         
-        self::query("
+        $this->taskTransaction(function () use ($company, $creator, $org, $contact, $domain, $desc, $worker, $admin, $password, $asap, $message, $path, $saveCustomer, $date) {
+            self::query("
 
             INSERT INTO query
                 (Name, Hostname, Info, status, admin, password, Prio, worktime, worker_name_id, date, messageToDev, Path, creator)
@@ -830,6 +894,7 @@ class main extends database
                 ('".$company."', '".$domain."', '".$desc."', 'ongoing', '".$admin."', '".$password."', '".$asap."', '0', '".$worker."', '".$date."', '".$message."', '".$path."', '".$creator."')
 
         ");
+        $createdOrderId = (int)self::$mysql->insert_id;
 
         if($saveCustomer == "true")
         {
@@ -850,8 +915,7 @@ class main extends database
 
             if($stepsCount > 0)
             {
-                $getOrderId = self::query("SELECT id FROM query ORDER by id DESC")->assoc();
-                $orderId = $getOrderId['id'];
+                $orderId = $createdOrderId;
                 $counter = 1;
 
                 for($i = 0; $i < $stepsCount; $i++)
@@ -879,27 +943,14 @@ class main extends database
 
                 }
                
-                echo $domain;
                 self::query("INSERT INTO steps (step, `desc`, orderId, creator) VALUES " . $stepsData);
                 
             }
 
          }
 
-        $email = self::query("SELECT email, username FROM users WHERE id = '".$worker."'")->assoc();
-        
-        $subjectOne = "Ett nytt uppdrag av " . $_SESSION['user']['username'];
-        $messageOne = "<h1>Du har fått en ny uppgift</h1><br> ". $company . "<br>" . $domain ."<br>". "admin login: ". $admin . "<br> admin lösen: " . $password . "<br>" .$plain;
-        
-        $subjectTwo = "Din uppgift skickades till ". $email['username'];
-        $messageTwo = "<h1>Du har precis skickat en uppgift till ".$email['username']."</h1><br> ". $company . "<br>" . $domain ."<br>". "admin login: ". $admin . "<br>admin lösen: " . $password . "<br>" .$plain;
-       
-        $email = $email['email'];
-        
-        $mailer = new Mailer($this->mailServer);
-
-        $mailer->sendEmail($email, $subjectOne, $messageOne);
-        $mailer->sendEmail($_SESSION['user']['email'], $subjectTwo, $messageTwo);
+        if ($createdOrderId > 0) $this->notifyOrder($createdOrderId, 'assigned');
+        });
 
         echo $desc;
 
@@ -1037,6 +1088,7 @@ class main extends database
 
     private function renderOrderContactAndLogin($order)
     {
+        $website = trim($order['Hostname'] ?? '');
         $name = trim($order['contact_name'] ?? '');
         $org = trim($order['contact_org'] ?? '');
         $contact = trim($order['contact_details'] ?? '');
@@ -1044,12 +1096,19 @@ class main extends database
         $password = trim($order['password'] ?? '');
         if ($username === 'tomt') $username = '';
         if ($password === 'tomt') $password = '';
-        if ($name === '' && $org === '' && $contact === '' && $username === '' && $password === '') return;
+        if ($website === '' && $name === '' && $org === '' && $contact === '' && $username === '' && $password === '') return;
 
         $safe = static function ($value) {
             return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
         };
         echo '<details class="orderAccessDetails"><summary>Kontakt och inloggning</summary>';
+        if ($website !== '') {
+            $websiteUrl = preg_match('~^https?://~i', $website) ? $website : 'https://' . $website;
+            $websiteLink = filter_var($websiteUrl, FILTER_VALIDATE_URL)
+                ? '<a href="' . $safe($websiteUrl) . '" target="_blank" rel="noopener noreferrer">' . $safe($website) . '</a>'
+                : $safe($website);
+            echo '<p><strong>Webbadress:</strong> ' . $websiteLink . '</p>';
+        }
         if ($name !== '') echo '<p><strong>Kontaktperson:</strong> ' . $safe($name) . '</p>';
         if ($org !== '') echo '<p><strong>Företag / org:</strong> ' . $safe($org) . '</p>';
         if ($contact !== '') echo '<p><strong>Kontaktuppgifter:</strong> ' . $safe($contact) . '</p>';
@@ -1082,6 +1141,11 @@ class main extends database
             $domain = $this->formatDomain($domain);
         }
 
+        $movedFiles = [];
+        $createdImageDirectory = null;
+        try {
+            self::$mysql->begin_transaction();
+
         // 1. Spara namngivna kontaktpersoner så att de kan väljas på fler uppgifter.
         if ($company !== '') {
             $escComp = self::escape($company);
@@ -1112,7 +1176,7 @@ class main extends database
                 $saved = self::$mysql->query("INSERT INTO customers (name, url, org, contact, admin_username, admin_password) VALUES ('$escComp', '$escDom', '$escOrg', '$escCont', '$escAdm', '$escPass')");
             }
             if (!$saved) {
-                return ['success' => false, 'error' => 'Kunde inte spara kontaktpersonen.'];
+                throw new RuntimeException('Could not save customer');
             }
         }
 
@@ -1148,7 +1212,7 @@ class main extends database
         $orderId = $inserted ? (int)self::$mysql->insert_id : 0;
 
         if ($orderId <= 0) {
-            return ['success' => false, 'error' => 'Kunde inte skapa ordern i databasen.'];
+            throw new RuntimeException('Could not save task');
         }
 
         // 3. Spara delmoment i tabellen steps
@@ -1174,9 +1238,11 @@ class main extends database
 
                 if (!$hasImages) {
                     if (!is_dir($diskPath)) {
-                        mkdir($diskPath, 0777, true);
+                        if (!mkdir($diskPath, 0777, true)) {
+                            throw new RuntimeException('Could not create image directory');
+                        }
+                        $createdImageDirectory = $diskPath;
                     }
-                    $hasImages = true;
                 }
 
                 $originalName = $files['name'][$i] ?? 'image.jpg';
@@ -1189,6 +1255,8 @@ class main extends database
                 $imageUrl   = $relPath . '/' . $newName;
 
                 if (move_uploaded_file($files['tmp_name'][$i], $targetFile)) {
+                    $hasImages = true;
+                    $movedFiles[] = $targetFile;
                     $escImgUrl = self::escape($imageUrl);
                     $escPath   = self::escape($relPath);
                     self::query("INSERT INTO images (imageUrl, `Path`) VALUES ('$escImgUrl', '$escPath')");
@@ -1198,28 +1266,27 @@ class main extends database
 
         if (!$hasImages) {
             self::query("UPDATE query SET Path = 'NONE' WHERE id = '$orderId'");
-        }
-
-        // 5. E-postnotifiering
-        if ($worker > 0 && !empty($this->mailServer['website_mail'])) {
-            $workerData = self::query("SELECT email, username FROM users WHERE id = '$worker'")->assoc();
-            if (!empty($workerData['email'])) {
-                $mailer = new Mailer($this->mailServer);
-                $creatorName = $_SESSION['user']['username'] ?? 'En kollega';
-                $subject = "Ny uppgift tilldelad: $title";
-                $body = "<h2>Du har tilldelats en ny uppgift</h2>"
-                      . "<p><strong>Uppgift:</strong> " . htmlspecialchars($title) . "</p>"
-                      . ($company ? "<p><strong>Kontaktperson:</strong> " . htmlspecialchars($company) . "</p>" : "")
-                      . ($contact ? "<p><strong>Kontaktuppgifter:</strong> " . htmlspecialchars($contact) . "</p>" : "")
-                      . ($domain ? "<p><strong>Webb:</strong> " . htmlspecialchars($domain) . "</p>" : "")
-                      . "<p><strong>Tilldelad av:</strong> " . htmlspecialchars($creatorName) . "</p>"
-                      . ($asap === 'asap' ? "<p style='color:red;'><strong>OBS: Akut uppgift!</strong></p>" : "")
-                      . "<hr><p>" . nl2br(htmlspecialchars($desc)) . "</p>";
-
-                $mailer->sendEmail($workerData['email'], $subject, $body);
+            if ($createdImageDirectory !== null && is_dir($createdImageDirectory)) {
+                rmdir($createdImageDirectory);
+                $createdImageDirectory = null;
             }
         }
 
+        $this->notifyOrder($orderId, 'assigned');
+
+            self::$mysql->commit();
+
         return ['success' => true, 'orderId' => $orderId, 'order_id' => $orderId];
+        } catch (Throwable $error) {
+            self::$mysql->rollback();
+            foreach ($movedFiles as $file) {
+                if (is_file($file)) unlink($file);
+            }
+            if ($createdImageDirectory !== null && is_dir($createdImageDirectory)) {
+                rmdir($createdImageDirectory);
+            }
+            error_log('Task creation failed (' . get_class($error) . ', code ' . $error->getCode() . ')');
+            return ['success' => false, 'error' => 'Kunde inte skapa uppgiften. Försök igen.'];
+        }
     }
 }
