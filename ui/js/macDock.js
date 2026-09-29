@@ -145,6 +145,14 @@
         $popover.on('click', '.recycle', function () {
             closeSubmenu();
         });
+
+        $popover.on('click', '#dockWorkflowBtn', function () {
+            closeSubmenu();
+        });
+
+        $popover.on('click', '#historyFloatTrigger', function () {
+            closeSubmenu();
+        });
     }
 
 })(jQuery);

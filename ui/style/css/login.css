@@ -71,21 +71,6 @@ body {
   backdrop-filter: blur(14px);
 }
 
-.brandMark {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 20px;
-  place-items: center;
-  border-radius: 13px;
-  color: #fff;
-  background: #176fe0;
-  box-shadow: 0 8px 18px rgba(20, 111, 228, 0.28);
-  font-family: 'Manrope', sans-serif;
-  font-size: 21px;
-  font-weight: 800;
-}
-
 .eyebrow {
   margin: 0 0 4px;
   color: var(--blue);

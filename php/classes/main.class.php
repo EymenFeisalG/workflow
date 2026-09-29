@@ -310,8 +310,8 @@ class main extends database
         </a>
 
         <a class="dockItemLink">
-            <span data-url="rework" class="dockTextTab badge dockFilterRework" role="button" tabindex="0">
-                <span class="dockTabText">Kompletteras</span>
+            <span data-url="rework" class="dockTextTab badge dockFilterRework" role="button" tabindex="0" aria-label="Kompletteras">
+                <span class="dockTabText">Kompl.</span>
                 <?php if($rework > 0): ?><span class="dockBadge badgeRework"><?php echo $rework; ?></span><?php endif; ?>
             </span>
         </a>

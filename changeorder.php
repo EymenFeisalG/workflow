@@ -52,7 +52,6 @@
 
     <title>Workflow: Redigera order</title>
 
-    <link rel="icon" type="image/x-icon" href="ui/style/images/icons/W.ico">
 
 </head>
 

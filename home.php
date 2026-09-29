@@ -21,7 +21,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="ui/style/css/app.css?v=2.7" rel="stylesheet">
+    <link href="ui/style/css/app.css?v=2.8" rel="stylesheet">
     <script>
         workflow = false;
         var Direction = "<?php echo $_GET['dir']; ?>";
@@ -34,19 +34,18 @@
         var TeamWorkers = <?php echo json_encode($main->getWorkersList(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
     </script>
     <link href="ui/style/css/general.css" rel="stylesheet">
-    <link href="ui/style/css/orderModal.css?v=2.7" rel="stylesheet">
-    <link href="ui/style/css/macDock.css?v=2.6" rel="stylesheet">
+    <link href="ui/style/css/orderModal.css?v=2.8" rel="stylesheet">
+    <link href="ui/style/css/macDock.css?v=2.7" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
     <script src="ui/js/orderModal.js?v=2.7"></script>
-    <script src="ui/js/macDock.js?v=2.6"></script>
+    <script src="ui/js/macDock.js?v=2.7"></script>
     <script src="ui/js/app.js?v=2.6"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
 
 
-    <title>WorkGUI</title>
-    <link rel="icon" type="image/x-icon" href="ui/style/images/icons/W.ico">
+    <title>Workflow</title>
 </head>
 <body>
 
@@ -98,12 +97,6 @@
             </div>
         </aside>
 
-        <!-- Flytande trigger-knapp för mobil / mindre skärmar -->
-        <button type="button" class="historyFloatTrigger" id="historyFloatTrigger">
-            <span>📋 Skapade</span>
-            <span class="historyFloatBadge" id="historyFloatBadge">0</span>
-        </button>
-
         <!-- macOS Dock Floating Bottom Navigation -->
         <nav class="macDockWrapper" id="macDockWrapper" aria-label="Huvudmeny">
             <!-- Spotlight Quick Search Popover -->
@@ -134,6 +127,24 @@
                     </div>
 
                     <div class="dockSubmenuList">
+                        <button type="button" class="dockSubmenuItem historyFloatTrigger" id="historyFloatTrigger" role="menuitem">
+                            <span>📋 Skapade uppdrag</span>
+                            <span class="historyFloatBadge" id="historyFloatBadge">0</span>
+                        </button>
+
+                        <button type="button" class="dockSubmenuItem" id="dockWorkflowBtn" data-url="prio" role="menuitem">
+                            <svg class="dockSubmenuSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="7" height="7" rx="1"></rect>
+                                <rect x="14" y="4" width="7" height="7" rx="1"></rect>
+                                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                                <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                            </svg>
+                            <div class="dockSubmenuItemContent">
+                                <span class="dockSubmenuItemTitle">Workflow</span>
+                                <span class="dockSubmenuItemDesc">Kanban och prioritering</span>
+                            </div>
+                        </button>
+
                         <?php if($auth->hasRight('admin')): ?>
                         <a href="admin/" class="dockSubmenuItem" role="menuitem">
                             <svg class="dockSubmenuSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -196,20 +207,15 @@
                     <span>Sök</span>
                 </button>
 
-                <!-- Workflow (Dynamic AJAX Kanban & Prio) -->
-                <button type="button" class="dockTextBtn dockBtnWorkflow" id="dockWorkflowBtn" data-url="prio" aria-label="Workflow" title="Workflow (Kanban & Prioritering)">
-                    <span class="dockTabText">Workflow</span>
-                </button>
-
-                <div class="dockDivider" role="separator"></div>
+                <div class="dockDivider dockUtilityDivider" role="separator"></div>
 
                 <!-- Order Status / Kategori Filter Badge Tabs (#parentStats) -->
                 <?php $main->getOrderNav(); ?>
 
-                <div class="dockDivider" role="separator"></div>
+                <div class="dockDivider dockUtilityDivider" role="separator"></div>
 
                 <!-- Submeny Trigger: Mer (Admin, Papperskorg, Logga ut) -->
-                <button type="button" class="dockTextBtn dockBtnMore" id="dockMoreTrigger" aria-label="Fler alternativ" aria-haspopup="true" aria-expanded="false" title="Mer (Admin, Papperskorg, Logga ut)">
+                <button type="button" class="dockTextBtn dockBtnMore" id="dockMoreTrigger" aria-label="Fler alternativ" aria-haspopup="true" aria-expanded="false" title="Mer (Workflow, Skapade, Admin, Papperskorg, Logga ut)">
                     <svg class="dockSmallSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="1.5"></circle>
                         <circle cx="19" cy="12" r="1.5"></circle>

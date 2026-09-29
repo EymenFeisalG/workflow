@@ -67,8 +67,7 @@
 </script>
 
 
-    <title>WorkGUI</title>
-    <link rel="icon" type="image/x-icon" href="ui/style/images/icons/W.ico">
+    <title>Workflow: Prioritering</title>
 </head>
 <body>
 

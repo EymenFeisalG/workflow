@@ -33,8 +33,7 @@
     <link href="ui/style/css/general.css" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
-    <title>WorkGUI: Logga in</title>
-    <link rel="icon" type="image/x-icon" href="ui/style/images/icons/W.ico">
+    <title>Workflow: Aktivera konto</title>
 </head>
 <body>
     <div class="loginHolder">

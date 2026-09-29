@@ -238,6 +238,11 @@
     color: #ffffff;
 }
 
+.dockSubmenuItem.active {
+    background: rgba(56, 189, 248, 0.18);
+    color: #7dd3fc;
+}
+
 .dockSubmenuItem:active {
     transform: scale(0.98);
 }
@@ -700,6 +705,94 @@ button.dockTextBtn.addOrder {
 
 .ordersFadeIn {
     animation: ordersContentFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Keep every task category visible on compact screens. */
+@media (max-width: 700px) {
+    .macDock {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        grid-template-rows: auto auto;
+        width: 100%;
+        max-width: none;
+        gap: 0.25rem 0.1rem;
+        padding: 0.45rem 0.4rem;
+        overflow: visible;
+        border-radius: 1.15rem;
+    }
+
+    .macDock .dockUtilityDivider {
+        display: none;
+    }
+
+    .macDock #parentStats {
+        display: contents !important;
+    }
+
+    .macDock #parentStats .dockItemLink {
+        display: flex;
+        grid-row: 1;
+        min-width: 0;
+        width: auto;
+        justify-content: center;
+    }
+
+    .macDock #parentStats .dockTextTab {
+        width: 100%;
+        min-width: 0;
+        min-height: 2.25rem;
+        justify-content: center;
+        gap: 0.12rem;
+        padding: 0.38rem 0.08rem;
+        font-size: 0.65rem;
+    }
+
+    .macDock #parentStats .dockTabText {
+        font-size: 0.64rem;
+        letter-spacing: 0;
+    }
+
+    .macDock #parentStats .dockBadge {
+        top: -0.16rem;
+        right: 0;
+        min-width: 0.95rem;
+        height: 0.95rem;
+        padding: 0 0.18rem;
+        font-size: 0.56rem;
+        line-height: 0.95rem;
+    }
+
+    .macDock button.dockTextBtn.addOrder {
+        grid-area: 2 / 1 / 3 / 3;
+        justify-self: center;
+        width: 2.45rem !important;
+        height: 2.45rem;
+        min-height: 2.45rem;
+        border-radius: 50%;
+        padding: 0 !important;
+    }
+
+    .macDock .addOrder > span:not(.dockBtnPlus) {
+        display: none;
+    }
+
+    .macDock .dockBtnPlus {
+        font-size: 1.45rem;
+    }
+
+    .macDock #dockSpotlightTrigger {
+        grid-area: 2 / 3 / 3 / 5;
+        justify-self: center;
+    }
+
+    .macDock #dockMoreTrigger {
+        grid-area: 2 / 5 / 3 / 7;
+        justify-self: center;
+    }
+
+    .macDockWrapper {
+        padding-bottom: max(0.45rem, env(safe-area-inset-bottom, 0.45rem));
+    }
 }
 
 /* Sleek Empty State for empty categories */
