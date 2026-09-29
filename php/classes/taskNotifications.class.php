@@ -30,40 +30,51 @@ class TaskNotifications
         $this->emitTo($orderId, $actorId, $type, $detail, array_merge([(int)$order['creator'], (int)$order['worker_name_id']], $extraRecipients));
     }
 
-    public function emitTo(int $orderId, int $actorId, string $type, string $detail, array $recipients): void
+    public function emitTo(int $orderId, int $actorId, string $type, string $detail, array $recipients, ?int $messageId = null): void
     {
         $recipients = array_unique(array_map('intval', $recipients));
-        $stmt = $this->db->prepare('INSERT INTO task_notifications (recipient_id, actor_id, order_id, event_type, detail) VALUES (?, ?, ?, ?, ?)');
+        $stmt = $messageId === null
+            ? $this->db->prepare('INSERT INTO task_notifications (recipient_id, actor_id, order_id, event_type, detail) VALUES (?, ?, ?, ?, ?)')
+            : $this->db->prepare('INSERT INTO task_notifications (recipient_id, actor_id, order_id, event_type, detail, message_id) VALUES (?, ?, ?, ?, ?, ?)');
         $detail = mb_substr(trim($detail), 0, 255);
         foreach ($recipients as $recipientId) {
             $recipientId = (int)$recipientId;
             if ($recipientId < 1 || $recipientId === $actorId) continue;
-            $stmt->bind_param('iiiss', $recipientId, $actorId, $orderId, $type, $detail);
+            if ($messageId === null) $stmt->bind_param('iiiss', $recipientId, $actorId, $orderId, $type, $detail);
+            else $stmt->bind_param('iiissi', $recipientId, $actorId, $orderId, $type, $detail, $messageId);
             $stmt->execute();
         }
     }
 
-    public function listFor(int $userId): array
+    public function listFor(int $userId, bool $showAll = false): array
     {
-        $stmt = $this->db->prepare('SELECT n.id, n.order_id, n.event_type, n.detail, n.created_at, n.read_at, q.Name AS order_title, q.status, u.username AS actor_name FROM task_notifications n JOIN `query` q ON q.id = n.order_id JOIN users u ON u.id = n.actor_id WHERE n.recipient_id = ? ORDER BY n.id DESC LIMIT 50');
-        $stmt->bind_param('i', $userId);
+        $visible = "n.event_type <> 'thread_message' OR ? = 1 OR q.creator = ? OR q.worker_name_id = ?";
+        $stmt = $this->db->prepare('SELECT n.id, n.order_id, n.event_type, n.detail, n.created_at, n.read_at, q.Name AS order_title, q.status, u.username AS actor_name FROM task_notifications n JOIN `query` q ON q.id = n.order_id JOIN users u ON u.id = n.actor_id WHERE n.recipient_id = ? AND (' . $visible . ') ORDER BY n.id DESC LIMIT 50');
+        $all = $showAll ? 1 : 0;
+        $stmt->bind_param('iiii', $userId, $all, $userId, $userId);
         $stmt->execute();
         $items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $count = $this->db->prepare('SELECT COUNT(*) AS total FROM task_notifications WHERE recipient_id = ? AND read_at IS NULL');
-        $count->bind_param('i', $userId);
+        $count = $this->db->prepare('SELECT COUNT(*) AS total FROM task_notifications n JOIN `query` q ON q.id = n.order_id WHERE n.recipient_id = ? AND n.read_at IS NULL AND (' . $visible . ')');
+        $count->bind_param('iiii', $userId, $all, $userId, $userId);
         $count->execute();
-        return ['items' => $items, 'unread' => (int)$count->get_result()->fetch_assoc()['total']];
+        $unread = (int)$count->get_result()->fetch_assoc()['total'];
+        $threadCount = $this->db->prepare("SELECT n.order_id, COUNT(*) AS total FROM task_notifications n JOIN `query` q ON q.id = n.order_id WHERE n.recipient_id = ? AND n.read_at IS NULL AND n.event_type = 'thread_message' AND (? = 1 OR q.creator = ? OR q.worker_name_id = ?) GROUP BY n.order_id");
+        $threadCount->bind_param('iiii', $userId, $all, $userId, $userId);
+        $threadCount->execute();
+        $threadUnread = [];
+        foreach ($threadCount->get_result()->fetch_all(MYSQLI_ASSOC) as $row) $threadUnread[(string)$row['order_id']] = (int)$row['total'];
+        return ['items' => $items, 'unread' => $unread, 'threadUnread' => $threadUnread];
     }
 
     public function markRead(int $userId, array $ids = [], bool $all = false): void
     {
         if ($all) {
-            $stmt = $this->db->prepare('UPDATE task_notifications SET read_at = NOW() WHERE recipient_id = ? AND read_at IS NULL');
+            $stmt = $this->db->prepare("UPDATE task_notifications SET read_at = NOW() WHERE recipient_id = ? AND read_at IS NULL AND event_type <> 'thread_message'");
             $stmt->bind_param('i', $userId);
             $stmt->execute();
             return;
         }
-        $stmt = $this->db->prepare('UPDATE task_notifications SET read_at = NOW() WHERE recipient_id = ? AND id = ? AND read_at IS NULL');
+        $stmt = $this->db->prepare("UPDATE task_notifications SET read_at = NOW() WHERE recipient_id = ? AND id = ? AND read_at IS NULL AND event_type <> 'thread_message'");
         foreach (array_unique(array_map('intval', $ids)) as $id) {
             if ($id < 1) continue;
             $stmt->bind_param('ii', $userId, $id);

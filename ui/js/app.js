@@ -141,6 +141,7 @@ $(document).ready(function () {
                 } else {
                     $orders.html(trimmed);
                     addToOrder();
+                    if ($('#notificationBell').length) refreshNotifications();
                     const selectedId = new URLSearchParams(window.location.search).get('orderId');
                     if (selectedId && /^\d+$/.test(selectedId)) {
                         const $selected = $orders.find('[data-orderId="' + selectedId + '"]');
@@ -452,6 +453,132 @@ $(document).ready(function () {
         });
     }
 
+    /* ==========================================================================
+       Task discussions
+       ========================================================================== */
+
+    function threadMessageElement(item) {
+        const $item = $('<article class="taskThreadMessage">').attr('data-message-id', Number(item.id));
+        const $meta = $('<div class="taskThreadMessageMeta">');
+        const date = new Date(String(item.created_at).replace(' ', 'T'));
+        $meta.append($('<strong>').text(item.author_name || 'Okänd användare'));
+        $meta.append($('<time>').text(Number.isNaN(date.getTime()) ? item.created_at : date.toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })));
+        $item.append($meta, $('<p>').text(item.body));
+        return $item;
+    }
+
+    function threadIsVisible($thread) {
+        return !$thread.find('.taskThreadPanel').prop('hidden') &&
+            document.visibilityState === 'visible' &&
+            (!$('body').hasClass('focusOpen') || $thread.closest('#focusContent').length > 0);
+    }
+
+    function markThreadMessagesViewed($thread, items) {
+        const ids = items.map(function (item) { return Number(item.id); });
+        if (!ids.length || !threadIsVisible($thread)) return;
+        $.post('php/functions/taskThread.php', {
+            action: 'read', orderId: Number($thread.attr('data-thread-order-id')),
+            messageIds: ids, csrf: WorkflowCsrf
+        }, refreshNotifications);
+    }
+
+    function loadThread($thread, mode) {
+        if (!$thread.length || !threadIsVisible($thread)) return;
+        if ($thread.data('threadLoading')) {
+            $thread.data('threadPendingMode', mode === 'initial' ? 'initial' : ($thread.data('threadPendingMode') || 'newer'));
+            return;
+        }
+        const $messages = $thread.find('.taskThreadMessages');
+        const firstId = Number($messages.children().first().attr('data-message-id')) || 0;
+        const lastId = Number($messages.children().last().attr('data-message-id')) || 0;
+        if (mode === 'older' && !firstId) return;
+        if (mode === 'newer' && !lastId) mode = 'initial';
+        const data = { orderId: Number($thread.attr('data-thread-order-id')) };
+        if (mode === 'older') data.beforeId = firstId;
+        if (mode === 'newer') data.afterId = lastId;
+        $thread.data('threadLoading', true);
+        if (mode !== 'newer') $thread.find('.taskThreadStatus').text('Hämtar diskussionen…');
+        $.getJSON('php/functions/taskThread.php', data).done(function (result) {
+            if (!threadIsVisible($thread)) return;
+            const items = result.messages || [];
+            const nodes = items.map(threadMessageElement);
+            if (mode === 'initial') $messages.empty();
+            if (mode === 'older') $messages.prepend(nodes);
+            else $messages.append(nodes);
+            if (mode !== 'newer') $thread.find('.taskThreadOlder').prop('hidden', !result.hasMore);
+            $thread.find('.taskThreadForm').prop('hidden', !result.canWrite);
+            $thread.find('.taskThreadLocked').prop('hidden', !!result.canWrite);
+            $thread.find('.taskThreadStatus').text($messages.children().length ? '' : 'Inga inlägg ännu.');
+            if (mode === 'initial' && $messages.length) $messages.scrollTop($messages[0].scrollHeight);
+            if ($thread.data('threadScrollAfterLoad')) {
+                $messages.scrollTop($messages[0].scrollHeight);
+                $thread.removeData('threadScrollAfterLoad');
+            }
+            markThreadMessagesViewed($thread, items);
+            if (mode === 'newer' && result.hasMore) {
+                window.setTimeout(function () { loadThread($thread, 'newer'); }, 0);
+            }
+        }).fail(function (xhr) {
+            $thread.find('.taskThreadStatus').text((xhr.responseJSON && xhr.responseJSON.error) || 'Diskussionen kunde inte hämtas.');
+        }).always(function () {
+            $thread.data('threadLoading', false);
+            const pending = $thread.data('threadPendingMode');
+            if (pending) {
+                $thread.removeData('threadPendingMode');
+                loadThread($thread, pending);
+            }
+        });
+    }
+
+    function openThread($thread) {
+        if (!$thread.length) return;
+        $thread.find('.taskThreadPanel').prop('hidden', false);
+        $thread.find('.taskThreadToggle').attr('aria-expanded', 'true');
+        loadThread($thread, 'initial');
+    }
+
+    $(document).on('click', '.taskThreadToggle', function (event) {
+        event.stopPropagation();
+        const $thread = $(this).closest('.taskThread');
+        if ($thread.find('.taskThreadPanel').prop('hidden')) openThread($thread);
+        else {
+            $thread.find('.taskThreadPanel').prop('hidden', true);
+            $(this).attr('aria-expanded', 'false');
+        }
+    });
+    $(document).on('click', '.taskThreadOlder', function (event) {
+        event.stopPropagation();
+        loadThread($(this).closest('.taskThread'), 'older');
+    });
+    $(document).on('submit', '.taskThreadForm', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const $thread = $(this).closest('.taskThread');
+        const $input = $(this).find('.taskThreadInput');
+        const body = $input.val().trim();
+        if (!body) return;
+        const $button = $(this).find('.taskThreadSend').prop('disabled', true);
+        $thread.find('.taskThreadStatus').text('Skickar…');
+        $.post('php/functions/taskThread.php', {
+            action: 'send', orderId: Number($thread.attr('data-thread-order-id')),
+            body: body, csrf: WorkflowCsrf
+        }, null, 'json').done(function () {
+            $input.val('');
+            $thread.find('.taskThreadStatus').text('');
+            $thread.data('threadScrollAfterLoad', true);
+            loadThread($thread, 'newer');
+            refreshNotifications();
+        }).fail(function (xhr) {
+            $thread.find('.taskThreadStatus').text((xhr.responseJSON && xhr.responseJSON.error) || 'Inlägget kunde inte skickas.');
+        }).always(function () { $button.prop('disabled', false); });
+    });
+    window.setInterval(function () {
+        $('.taskThreadPanel').each(function () {
+            const $thread = $(this).closest('.taskThread');
+            if (threadIsVisible($thread)) loadThread($thread, 'newer');
+        });
+    }, 30000);
+
     // Image Gallery Modal
     $(document).on('click', '.openGallery', function () {
         let id = $(this).data('path');
@@ -488,7 +615,7 @@ $(document).ready(function () {
        7. Focus Mode
        ========================================================================== */
 
-    function showFocus(order) {
+    function showFocus(order, openDiscussion = false) {
         if (!order || !$('#focusOverlay').length) return;
         $.get('php/functions/getOrders.php', { dir: 'focus', orderId: order.id }, function (html) {
             if (!html || html.trim() === 'empty') { closeFocus(); return; }
@@ -499,6 +626,7 @@ $(document).ready(function () {
             $('#focusOverlay').prop('hidden', false);
             $('body').addClass('focusOpen');
             addToOrder();
+            if (openDiscussion) openThread($('#focusContent .taskThread').first());
         }).fail(function () { message('Kunde inte öppna uppgiften.', 'Fokusläge'); });
     }
 
@@ -509,7 +637,7 @@ $(document).ready(function () {
         });
     }
 
-    function showReadOnly(orderId) {
+    function showReadOnly(orderId, openDiscussion = false) {
         $.get('php/functions/getOrders.php', { dir: 'single', orderId: orderId }, function (html) {
             if (!html || html.trim() === 'empty') { message('Uppgiften är inte längre tillgänglig.', 'Notifikationer'); return; }
             temporaryView = true;
@@ -518,14 +646,15 @@ $(document).ready(function () {
             $('#focusOverlay').prop('hidden', false);
             $('body').addClass('focusOpen');
             addToOrder();
+            if (openDiscussion) openThread($('#focusContent .taskThread').first());
         });
     }
 
-    function setFocus(orderId, allowReadOnly = false) {
+    function setFocus(orderId, allowReadOnly = false, openDiscussion = false) {
         $.post('php/functions/focusOrder.php', { action: 'set', orderId: orderId, csrf: WorkflowCsrf }, function (result) {
-            showFocus(result.order);
+            showFocus(result.order, openDiscussion);
         }, 'json').fail(function () {
-            if (allowReadOnly) showReadOnly(orderId);
+            if (allowReadOnly) showReadOnly(orderId, openDiscussion);
             else message('Uppgiften kan inte öppnas i fokusläge.', 'Fokusläge');
         });
     }
@@ -558,7 +687,8 @@ $(document).ready(function () {
         assigned: 'tilldelade eller omfördelade uppgiften', unassigned: 'tog bort din tilldelning', updated: 'ändrade uppgiften',
         step_completed: 'slutförde ett steg', step_reopened: 'öppnade ett steg igen', pending: 'skickade uppgiften för granskning',
         rework: 'begärde komplettering', completed: 'godkände uppgiften',
-        canceled: 'flyttade uppgiften till papperskorgen', restored: 'återställde uppgiften'
+        canceled: 'flyttade uppgiften till papperskorgen', restored: 'återställde uppgiften',
+        thread_message: 'skrev i diskussionen'
     };
 
     function refreshNotifications() {
@@ -566,10 +696,15 @@ $(document).ready(function () {
             const count = Number(result.unread || 0);
             $('#notificationCount').text(count > 99 ? '99+' : count).prop('hidden', count === 0);
             $('#notificationBell').attr('aria-label', 'Notifikationer, ' + count + ' olästa');
+            $('[data-thread-order-id]').each(function () {
+                const unread = Number((result.threadUnread || {})[$(this).attr('data-thread-order-id')] || 0);
+                $(this).find('.taskThreadUnread').text(unread > 99 ? '99+' : unread).prop('hidden', unread === 0);
+            });
             const groups = new Map();
             (result.items || []).forEach(function (item) {
-                const key = String(item.order_id);
-                if (!groups.has(key)) groups.set(key, { latest: item, ids: [], unread: false });
+                const isThread = item.event_type === 'thread_message';
+                const key = String(item.order_id) + (isThread ? ':thread' : ':event');
+                if (!groups.has(key)) groups.set(key, { latest: item, ids: [], unread: false, isThread: isThread });
                 const group = groups.get(key);
                 group.ids.push(Number(item.id));
                 if (!item.read_at) group.unread = true;
@@ -581,7 +716,7 @@ $(document).ready(function () {
                 const date = new Date(String(item.created_at).replace(' ', 'T'));
                 const time = Number.isNaN(date.getTime()) ? '' : date.toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' });
                 const extra = group.ids.length > 1 ? '<span class="notificationGrouped">' + group.ids.length + ' händelser</span>' : '';
-                return '<button type="button" class="notificationItem' + (group.unread ? ' unread' : '') + '" data-order-id="' + Number(item.order_id) + '" data-notification-ids="' + group.ids.join(',') + '">' +
+                return '<button type="button" class="notificationItem' + (group.unread ? ' unread' : '') + '" data-order-id="' + Number(item.order_id) + '" data-kind="' + (group.isThread ? 'thread' : 'event') + '" data-notification-ids="' + group.ids.join(',') + '">' +
                     '<span class="notificationDot"></span><span class="notificationBody"><strong>' + escapeNotification(item.order_title) + '</strong>' +
                     '<span>' + escapeNotification(item.actor_name) + ' ' + escapeNotification(action) + '</span>' +
                     (item.detail ? '<small>' + escapeNotification(item.detail) + '</small>' : '') +
@@ -603,10 +738,11 @@ $(document).ready(function () {
     $(document).on('click', '.notificationItem', function () {
         const ids = String($(this).attr('data-notification-ids')).split(',');
         const orderId = Number($(this).attr('data-order-id'));
-        $.post('php/functions/notifications.php', { ids: ids, csrf: WorkflowCsrf }, refreshNotifications);
+        const isThread = $(this).attr('data-kind') === 'thread';
+        if (!isThread) $.post('php/functions/notifications.php', { ids: ids, csrf: WorkflowCsrf }, refreshNotifications);
         $('#notificationPopover').prop('hidden', true);
         $('#notificationBell').attr('aria-expanded', 'false');
-        setFocus(orderId, true);
+        setFocus(orderId, true, isThread);
     });
 
     /* ==========================================================================

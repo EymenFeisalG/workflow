@@ -527,6 +527,7 @@ class main extends database
            <?php 
                 if($skriv['Path'] != 'NONE') echo '<div id="imgArea"><img data-path="'.$skriv['Path'].'" class="icon openGallery" src="ui/style/images/icons/galleryIcon.png"></div>';
           ?>
+           <?php $this->renderTaskThread($skriv); ?>
            <?php $this->renderOrderAttribution($skriv); ?>
        </div>
                                 
@@ -751,6 +752,7 @@ class main extends database
                 if($skriv['Path'] != 'NONE') echo '<div id="imgArea"><img data-path="'.$skriv['Path'].'" class="icon openGallery" src="ui/style/images/icons/galleryIcon.png"></div>';
           ?>
 
+           <?php $this->renderTaskThread($skriv); ?>
            <?php $this->renderOrderAttribution($skriv); ?>
        </div>
                                 
@@ -761,6 +763,34 @@ class main extends database
 
         return true;
 
+    }
+
+    private function renderTaskThread(array $order): void
+    {
+        $orderId = (int)$order['queryid'];
+        $canWrite = in_array($order['status'], ['ongoing', 'rework', 'pending'], true);
+        ?>
+        <section class="taskThread" data-thread-order-id="<?php echo $orderId; ?>" aria-label="Diskussion om uppgift <?php echo $orderId; ?>">
+            <button type="button" class="taskThreadToggle" aria-expanded="false">
+                <span>Diskussion</span><span class="taskThreadUnread" hidden></span><span class="taskThreadChevron" aria-hidden="true">⌄</span>
+            </button>
+            <div class="taskThreadPanel" hidden>
+                <button type="button" class="taskThreadOlder" hidden>Visa äldre inlägg</button>
+                <div class="taskThreadMessages" role="log" aria-live="polite"></div>
+                <p class="taskThreadStatus" role="status"></p>
+                <?php if ($canWrite): ?>
+                <form class="taskThreadForm">
+                    <label class="taskThreadLabel">Skriv i diskussionen
+                        <textarea class="taskThreadInput" maxlength="4000" rows="3" required placeholder="Vad har gjorts eller behöver diskuteras?"></textarea>
+                    </label>
+                    <button type="submit" class="taskThreadSend">Skicka</button>
+                </form>
+                <?php else: ?>
+                <p class="taskThreadLocked">Diskussionen är avslutad och kan bara läsas.</p>
+                <?php endif; ?>
+            </div>
+        </section>
+        <?php
     }
 
     private function renderOrderAttribution(array $order): void

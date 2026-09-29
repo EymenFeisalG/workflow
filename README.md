@@ -183,6 +183,11 @@ För att säkerställa att utvecklare eller projektledare aldrig förlorar text 
 - Vid återöppning återställs kontaktperson, webbadress, beskrivning, akuta flaggor, tilldelad medarbetare och delmoment direkt.
 - En diskret statusindikator visar när utkastet är sparat. Vid framgångsrikt skapande rensas utkastet automatiskt.
 
+### 6. Diskussion i uppgifter
+Varje uppgift har en texttråd som kan läsas av skaparen, den nuvarande utföraren och användare med `orders_show_all`. Nya inlägg kan skrivas medan uppgiften är pågående, granskas eller kompletteras. Slutförda och borttagna uppgifter har läsbar historik.
+
+`php/functions/taskThread.php` läser sidor om högst 50 inlägg via `GET` (`orderId`, valfritt `beforeId` eller `afterId`). `POST` med CSRF-token använder `action=send` och `body` för nya inlägg eller `action=read` och `messageIds[]` för inlägg som har visats. Varje inlägg och dess notiser sparas i samma databastransaktion. Notiser till skapare och utförare ligger kvar som olästa tills mottagaren öppnar tråden; knappen för att markera övriga notiser som lästa påverkar inte chattinlägg.
+
 ---
 
 ## Utvecklingsriktlinjer & Regler

@@ -31,14 +31,14 @@
         var TeamWorkers = <?php echo json_encode($main->getWorkersList(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
     </script>
     <link href="ui/style/css/general.css" rel="stylesheet">
-    <link href="ui/style/css/orderModal.css?v=3.9" rel="stylesheet">
+    <link href="ui/style/css/orderModal.css?v=3.10" rel="stylesheet">
     <link href="ui/style/css/macDock.css?v=3.7" rel="stylesheet">
-    <link href="ui/style/css/notificationsFocus.css?v=6" rel="stylesheet">
+    <link href="ui/style/css/notificationsFocus.css?v=9" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
     <script src="ui/js/orderModal.js?v=2.21"></script>
     <script src="ui/js/macDock.js?v=2.7"></script>
-    <script src="ui/js/app.js?v=2.11"></script>
+    <script src="ui/js/app.js?v=2.13"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
 
@@ -97,7 +97,7 @@
         <!-- macOS Dock Floating Bottom Navigation -->
         <nav class="macDockWrapper" id="macDockWrapper" aria-label="Huvudmeny">
             <section class="notificationPopover" id="notificationPopover" aria-label="Notifikationer" hidden>
-                <div class="notificationHeader"><strong>Notifikationer</strong><button type="button" id="notificationReadAll">Markera alla som lästa</button></div>
+                <div class="notificationHeader"><strong>Notifikationer</strong><button type="button" id="notificationReadAll">Markera övriga som lästa</button></div>
                 <div class="notificationList" id="notificationList"></div>
             </section>
             <!-- Spotlight Quick Search Popover -->
@@ -208,10 +208,6 @@
                     <span class="historySummaryItem"><span class="historySummaryLabel">Pågår</span><span class="historySummaryBadge" id="historyOngoingBadge">0</span></span>
                     <span class="historySummaryItem"><span class="historySummaryLabel">Klara</span><span class="historySummaryBadge" id="historyCompletedBadge">0</span></span>
                 </button>
-                <button type="button" class="dockTextBtn notificationBell" id="notificationBell" aria-label="Notifikationer" aria-expanded="false" aria-controls="notificationPopover" title="Notifikationer">
-                    <svg class="dockSmallSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
-                    <span id="notificationCount" class="notificationCount" hidden>0</span>
-                </button>
             </div>
 
             <!-- Floating Dock Shelf (Text-based, compact height) -->
@@ -232,6 +228,11 @@
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                     <span>Sök</span>
+                </button>
+
+                <button type="button" class="dockTextBtn notificationBell" id="notificationBell" aria-label="Notifikationer" aria-expanded="false" aria-controls="notificationPopover" title="Notifikationer">
+                    <svg class="dockSmallSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+                    <span id="notificationCount" class="notificationCount" hidden>0</span>
                 </button>
 
                 <div class="dockDivider dockUtilityDivider" role="separator"></div>

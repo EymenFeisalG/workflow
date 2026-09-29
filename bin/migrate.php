@@ -85,6 +85,8 @@ try {
         if ($sql === false || trim($sql) === '') {
             throw new RuntimeException('Empty or unreadable migration: ' . basename($file));
         }
+        // Git checkouts may use CRLF on Windows; checksums must remain portable.
+        $sql = str_replace("\r\n", "\n", $sql);
         $migrations[basename($file)] = ['sql' => $sql, 'checksum' => hash('sha256', $sql)];
     }
 

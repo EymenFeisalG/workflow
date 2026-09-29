@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS task_messages (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    author_id INT NOT NULL,
+    body TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_order_message (order_id, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

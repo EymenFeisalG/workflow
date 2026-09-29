@@ -16,6 +16,7 @@
 .notificationGrouped { margin-left: .5rem; color: #2563eb; }
 .notificationBell { position: relative; pointer-events: auto; width: 2.55rem; height: 2.55rem; min-width: 2.55rem; padding: .35rem; border-radius: 50%; background: #fff; color: #1e293b; border: 1px solid #dbe5f0; box-shadow: 0 .2rem .8rem rgba(15,23,42,.18); }
 .notificationBell .dockSmallSvg { width: 1.15rem; height: 1.15rem; }
+.macDock .notificationBell { flex: 0 0 auto; width: 2.25rem; min-width: 2.25rem; height: 2.25rem; min-height: 2.25rem; background: rgba(255,255,255,.1); color: #e2e8f0; border-color: rgba(255,255,255,.18); box-shadow: none; }
 .notificationCount { position: absolute; top: -.35rem; right: -.3rem; min-width: 1rem; height: 1rem; padding: 0 .15rem; border-radius: 99px; color: white; background: #ef4444; font-size: .6rem; line-height: 1rem; text-align: center; }
 .focusOpen { overflow: hidden; }
 .focusOverlay { position: fixed; inset: 0; z-index: 12000; display: flex; justify-content: center; background: rgba(15,23,42,.72); padding: max(.5rem, env(safe-area-inset-top)) .5rem max(.5rem, env(safe-area-inset-bottom)); }
@@ -27,4 +28,31 @@
 .focusContent .order { float: none; width: 100%; min-width: 0; max-width: none; margin: 0; padding: 1rem; border-radius: .75rem; box-shadow: 0 .25rem 1rem rgba(15,23,42,.08); }
 .focusContent .order .info, .focusContent .order .desc, .focusContent .order .Steps { max-width: 100%; }
 .focusContent .order .desc { overflow-wrap: anywhere; }
-@media (max-width: 700px) { .notificationPopover { width: calc(100vw - 1rem); max-height: calc(100dvh - 8.5rem); } .notificationBell { width: 2.75rem; min-width: 2.75rem; height: 2.75rem; } .focusOverlay { padding: 0; } .focusShell { width: 100%; height: 100dvh; border-radius: 0; } .focusContent { padding: .65rem; } .focusContent .order { padding: .75rem; } }
+@media (max-width: 700px) { .notificationPopover { width: calc(100vw - 1rem); max-height: calc(100dvh - 8.5rem); } .focusOverlay { padding: 0; } .focusShell { width: 100%; height: 100dvh; border-radius: 0; } .focusContent { padding: .65rem; } .focusContent .order { padding: .75rem; } }
+
+.workflowNotificationDock { position: fixed; z-index: 13000; top: .7rem; right: .8rem; }
+.workflowPage.focusOpen .workflowNotificationDock { display: none; }
+.workflowNotificationDock .notificationPopover { top: calc(100% + .5rem); right: 0; bottom: auto; left: auto; transform: none; }
+.workflowPage .order { height: auto; min-height: 18rem; overflow: visible; }
+.taskThread { clear: both; display: block; margin: .85rem 0 .5rem; border: 1px solid #dce5ef; border-radius: .75rem; background: #f8fbff; color: #172033; font: 400 .88rem/1.45 'Open Sans', sans-serif; }
+.taskThread [hidden] { display: none !important; }
+.taskThreadToggle { display: flex; align-items: center; gap: .55rem; width: 100%; padding: .7rem .85rem; border: 0; border-radius: .75rem; background: transparent; color: inherit; cursor: pointer; text-align: left; font: 700 .9rem/1.3 'Open Sans', sans-serif; }
+.taskThreadToggle:hover, .taskThreadToggle:focus-visible { background: #edf5ff; }
+.taskThreadChevron { margin-left: auto; font-size: 1.1rem; transition: transform .2s; }
+.taskThreadToggle[aria-expanded="true"] .taskThreadChevron { transform: rotate(180deg); }
+.taskThreadUnread { min-width: 1.15rem; padding: .05rem .35rem; border-radius: 99px; background: #2563eb; color: #fff; text-align: center; font-size: .72rem; }
+.taskThreadPanel { padding: .15rem .85rem .85rem; border-top: 1px solid #e2ebf6; }
+.taskThreadMessages { max-height: 20rem; overflow-y: auto; display: flex; flex-direction: column; gap: .55rem; padding: .4rem .1rem; }
+.taskThreadMessage { padding: .6rem .7rem; border: 1px solid #e3eaf3; border-radius: .65rem; background: #fff; overflow-wrap: anywhere; }
+.taskThreadMessageMeta { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .6rem; margin-bottom: .25rem; }
+.taskThreadMessageMeta strong { font-size: .82rem; }
+.taskThreadMessageMeta time { color: #64748b; font-size: .72rem; }
+.taskThreadMessage p { margin: 0; white-space: pre-wrap; }
+.taskThreadOlder { display: block; margin: .25rem auto; padding: .35rem .6rem; border: 0; background: transparent; color: #2563eb; cursor: pointer; font: inherit; }
+.taskThreadStatus, .taskThreadLocked { margin: .4rem 0; color: #64748b; font-size: .78rem; }
+.taskThreadForm { display: flex; flex-direction: column; gap: .55rem; margin-top: .55rem; }
+.taskThreadLabel { display: flex; flex-direction: column; gap: .3rem; font-size: .78rem; font-weight: 600; }
+.taskThreadInput { box-sizing: border-box; width: 100%; min-height: 4.5rem; padding: .55rem .65rem; border: 1px solid #cbd5e1; border-radius: .55rem; resize: vertical; color: #172033; background: #fff; font: 400 .88rem/1.45 'Open Sans', sans-serif; }
+.taskThreadSend { align-self: flex-end; padding: .45rem .85rem; border: 0; border-radius: .5rem; background: #2563eb; color: #fff; cursor: pointer; font: 600 .82rem/1.3 'Open Sans', sans-serif; }
+.taskThreadSend:disabled { opacity: .6; cursor: wait; }
+@media (max-width: 700px) { .workflowNotificationDock { top: .5rem; right: .5rem; } .workflowNotificationDock .notificationPopover { width: calc(100vw - 1rem); } .taskThreadPanel { padding: .15rem .65rem .7rem; } }

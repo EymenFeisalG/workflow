@@ -1254,7 +1254,7 @@
     to { transform: rotate(360deg); }
 }
 
-/* Summary and notifications share a centered row above the main menu. */
+/* Summary sits on its own row above the main menu. */
 .historyQuickBar {
     display: flex;
     align-items: center;
@@ -1262,11 +1262,6 @@
     max-width: calc(100vw - 1rem);
     margin-bottom: 0.4rem;
     pointer-events: auto;
-}
-
-.historyQuickBar::before {
-    content: "";
-    flex: 0 0 2.55rem;
 }
 
 .historyTabTrigger {
@@ -1560,22 +1555,17 @@
 
 @media (max-width: 700px) {
     .historyQuickBar {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 2.75rem;
         width: 100%;
         max-width: none;
         padding: 0 0.5rem;
         box-sizing: border-box;
     }
 
-    .historyQuickBar::before {
-        display: none;
-    }
-
     .historyTabTrigger {
         width: 100%;
         min-width: 0;
         box-sizing: border-box;
+        justify-content: space-between;
     }
 
     .createdHistoryCard {
@@ -1586,19 +1576,14 @@
 
 @media (max-width: 560px) {
     .historyTabTrigger {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.2rem 0.5rem;
-        padding: 0.35rem 0.65rem;
-    }
-
-    .historyQuickBar .notificationBell {
-        box-sizing: border-box;
+        gap: 0.25rem;
+        padding: 0.4rem 0.6rem;
+        font-size: clamp(0.6rem, 2.4vw, 0.75rem);
     }
 
     .historySummaryItem {
         min-width: 0;
-        justify-content: space-between;
+        gap: 0.15rem;
     }
 
     .historySummaryItem + .historySummaryItem {
@@ -1606,16 +1591,12 @@
         border-left: 0;
     }
 
-    .historySummaryItem {
-        gap: 0.08rem;
-    }
-
     .historySummaryBadge,
     .historyFloatBadge {
-        min-width: 0.85rem;
-        min-height: 0.85rem;
-        padding: 0 0.2rem;
-        font-size: 0.55rem;
+        min-width: 1rem;
+        min-height: 1rem;
+        padding: 0 0.18rem;
+        font-size: 0.62rem;
     }
 
     .historyQuickBar {
