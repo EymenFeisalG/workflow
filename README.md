@@ -152,7 +152,7 @@ Systemet bygger på en relationsdatabas i MySQL:
 ## Orderflöde & Gränssnitt
 
 ### 1. Terminologi: "Kontaktperson"
-I gränssnittet och i backend-meddelanden används konsekvent begreppet **Kontaktperson** istället för "kund". Fältet representerar den person hos beställaren som uppdraget är knutet till.
+Uppgiften har ett eget obligatoriskt namn. Kontaktperson är valfri och öppnas med plusknappen. Webbadress och valfria inloggningsuppgifter för valfri tjänst ligger i samma sektion. En namngiven kontaktperson sparas automatiskt i kontaktregistret och kan sökas fram för fler uppgifter. Uppgiften behåller också en kopia av kontaktuppgifterna. Databasändringen finns i `migrations/20260929_order_contact.sql`.
 
 ### 2. Pappersmodalen (Clean Sheet of Paper)
 Orderinmatningen är designad som ett minimalistiskt, fysiskt ark papper som glider upp från skärmens nederkant:

@@ -330,18 +330,18 @@ class main extends database
  
 
 
-    public function updateOrder($orderid, $company, $domain, $desc, $worker, $admin = 'tomt', $password = 'tomt', $asap = false, $messageToDev = "")
+    public function updateOrder($orderid, $company, $domain, $desc, $worker, $admin = '', $password = '', $asap = false, $messageToDev = "", $contactName = '', $contactOrg = '', $contactDetails = '')
     {
         if($company == '')
             return false;
 
-        if($admin == "") $admin = 'tomt';
-        if($password == "") $password = 'tomt';
-
-        $comapny = self::escape($company);
+        $company = self::escape($company);
         $domain = self::escape($domain);
         $admin = self::escape($admin);
         $password = self::escape($password);
+        $contactName = self::escape($contactName);
+        $contactOrg = self::escape($contactOrg);
+        $contactDetails = self::escape($contactDetails);
         $desc = self::escape($desc);
         $worker = self::escape($worker);
         $message = self::escape($messageToDev);
@@ -355,6 +355,9 @@ class main extends database
                 Info = '".$desc."', 
                 admin = '".$admin."',
                 password = '".$password."', 
+                contact_name = '".$contactName."',
+                contact_org = '".$contactOrg."',
+                contact_details = '".$contactDetails."',
                 Prio = '".$asap."', 
                 worker_name_id = '".$worker."'
 
@@ -435,9 +438,9 @@ class main extends database
         $string = self::escape($string);
 
         if($this->hasRight('orders_show_all'))
-            $search = "SELECT *, username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE (`query`.`Name` LIKE '".$string."%' OR `query`.`Hostname` LIKE '".$string."%') AND NOT status = 'canceled' ORDER BY `query`.id DESC";
+            $search = "SELECT query.*, users.username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE (`query`.`Name` LIKE '".$string."%' OR `query`.`Hostname` LIKE '".$string."%') AND NOT status = 'canceled' ORDER BY `query`.id DESC";
         else
-            $search = "SELECT *, username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE (`query`.`Name` LIKE '".$string."%' OR `query`.`Hostname` LIKE '".$string."%') AND NOT status = 'canceled' AND worker_name_id='".$myId."' ORDER BY `query`.id DESC";
+            $search = "SELECT query.*, users.username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE (`query`.`Name` LIKE '".$string."%' OR `query`.`Hostname` LIKE '".$string."%') AND NOT status = 'canceled' AND worker_name_id='".$myId."' ORDER BY `query`.id DESC";
 
         $query = self::query($search);
 
@@ -550,6 +553,7 @@ class main extends database
 
                 }
             ?>
+            <?php $this->renderOrderContactAndLogin($skriv); ?>
           
 
            <div class="stat">
@@ -583,7 +587,7 @@ class main extends database
             case 'prio':
 
                 if($this->hasRight('orders_show_all'))
-                    $string = "SELECT *, username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE `query`.`status` = 'ongoing'  ORDER BY `query`.number_prio ASC";
+                    $string = "SELECT query.*, users.username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE `query`.`status` = 'ongoing'  ORDER BY `query`.number_prio ASC";
                 else 
                     $string = 0;
 
@@ -592,51 +596,51 @@ class main extends database
             case 'all':
 
                 if($this->hasRight('orders_show_all'))
-                    $string = "SELECT *, username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE `query`.`status` = 'ongoing'  ORDER BY `query`.number_prio ASC";
+                    $string = "SELECT query.*, users.username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE `query`.`status` = 'ongoing'  ORDER BY `query`.number_prio ASC";
                 else 
                     $string = 0;
 
             break;
 
             case 'asap':
-                $string = "SELECT  *, username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE Prio = 'asap' AND `status` = 'ongoing' AND worker_name_id = '".$myId."' OR creator = '".$myId."' AND Prio = 'asap' AND status = 'ongoing' order BY query.number_prio ASC";
+                $string = "SELECT query.*, users.username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE Prio = 'asap' AND `status` = 'ongoing' AND worker_name_id = '".$myId."' OR creator = '".$myId."' AND Prio = 'asap' AND status = 'ongoing' order BY query.number_prio ASC";
             break;
 
             case 'ongoing':
-                $string = "SELECT *, username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id)  WHERE worker_name_id = '".$myId."' AND  `status` = 'ongoing'  order BY query.number_prio ASC";
+                $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id)  WHERE worker_name_id = '".$myId."' AND  `status` = 'ongoing'  order BY query.number_prio ASC";
             break;
 
             case 'pending':
                 
                 if($this->hasRight('orders_show_all'))
-                    $string = "SELECT *, username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'pending' order BY query.number_prio ASC";
+                    $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'pending' order BY query.number_prio ASC";
                 else
-                    $string = "SELECT *, username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'pending' WHERE query.creator = '".$myId."' OR query.worker_name_id ='".$myId."' order BY query.number_prio ASC";
+                    $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'pending' WHERE query.creator = '".$myId."' OR query.worker_name_id ='".$myId."' order BY query.number_prio ASC";
             break;
 
             case 'rework':
-                $string = "SELECT *, username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'rework'  WHERE query.creator = '".$myId."' OR query.worker_name_id ='".$myId."' order BY query.number_prio ASC";
+                $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'rework'  WHERE query.creator = '".$myId."' OR query.worker_name_id ='".$myId."' order BY query.number_prio ASC";
             break;
 
             case 'completed':
                
                 if($this->hasRight('orders_show_all'))
-                    $string = "SELECT *, username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'completed' order BY query.number_prio ASC";
+                    $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'completed' order BY query.number_prio ASC";
                 else
-                    $string = "SELECT *, username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'completed'  WHERE query.creator = '".$myId."' OR query.worker_name_id ='".$myId."' AND status = 'completed' order BY query.number_prio ASC";
+                    $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'completed'  WHERE query.creator = '".$myId."' OR query.worker_name_id ='".$myId."' AND status = 'completed' order BY query.number_prio ASC";
             break;
 
             case 'canceled':
-                $string = "SELECT *, username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'canceled' order BY query.number_prio ASC";
+                $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) AND `status` = 'canceled' order BY query.number_prio ASC";
 
             break;
 
             case 'created_by_me':
-                $string = "SELECT *, username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) WHERE query.creator = '".$myId."' AND NOT query.status = 'canceled' ORDER BY query.id DESC";
+                $string = "SELECT query.*, users.username, query.id AS queryid FROM `query` INNER JOIN users ON(users.id = `query`.worker_name_id) WHERE query.creator = '".$myId."' AND NOT query.status = 'canceled' ORDER BY query.id DESC";
             break;
 
             default:
-                $string = "SELECT  *, username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE `status` = '".$category."' AND worker_name_id = '".$myId."' order BY query.number_prio ASC";
+                $string = "SELECT query.*, users.username, query.id AS queryid FROM query  INNER JOIN users ON (query.worker_name_id = users.id) WHERE `status` = '".$category."' AND worker_name_id = '".$myId."' order BY query.number_prio ASC";
             break;
         }
 
@@ -763,6 +767,7 @@ class main extends database
 
                 }
             ?>
+            <?php $this->renderOrderContactAndLogin($skriv); ?>
            <div class="stat">
            <button class="saveOrder">Spara</button>
            </div>
@@ -1030,9 +1035,33 @@ class main extends database
         return $customers;
     }
 
+    private function renderOrderContactAndLogin($order)
+    {
+        $name = trim($order['contact_name'] ?? '');
+        $org = trim($order['contact_org'] ?? '');
+        $contact = trim($order['contact_details'] ?? '');
+        $username = trim($order['admin'] ?? '');
+        $password = trim($order['password'] ?? '');
+        if ($username === 'tomt') $username = '';
+        if ($password === 'tomt') $password = '';
+        if ($name === '' && $org === '' && $contact === '' && $username === '' && $password === '') return;
+
+        $safe = static function ($value) {
+            return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+        };
+        echo '<details class="orderAccessDetails"><summary>Kontakt och inloggning</summary>';
+        if ($name !== '') echo '<p><strong>Kontaktperson:</strong> ' . $safe($name) . '</p>';
+        if ($org !== '') echo '<p><strong>Företag / org:</strong> ' . $safe($org) . '</p>';
+        if ($contact !== '') echo '<p><strong>Kontaktuppgifter:</strong> ' . $safe($contact) . '</p>';
+        if ($username !== '') echo '<p><strong>Användarnamn:</strong> ' . $safe($username) . '</p>';
+        if ($password !== '') echo '<details><summary>Visa lösenord</summary><p>' . $safe($password) . '</p></details>';
+        echo '</details>';
+    }
+
     public function createOrderUnified($data, $files = null)
     {
         $creator = (int)($_SESSION['user']['userid'] ?? 0);
+        $title   = trim($data['order_title'] ?? '');
         $company = trim($data['company_name'] ?? '');
         $domain  = trim($data['company_domain'] ?? '');
         $org     = trim($data['org'] ?? '');
@@ -1042,20 +1071,19 @@ class main extends database
         $worker  = (int)($data['worker'] ?? 0);
         $asap    = ($data['asap'] ?? '') === 'asap' ? 'asap' : 'normal';
         $desc    = trim($data['order_desc'] ?? '');
-        $saveCust = !empty($data['saveCustomer']) && ($data['saveCustomer'] === 'true' || $data['saveCustomer'] === '1' || $data['saveCustomer'] === true);
         $custId  = (int)($data['customer_id'] ?? 0);
         $steps   = isset($data['steps']) ? (is_array($data['steps']) ? $data['steps'] : json_decode($data['steps'], true)) : [];
 
-        if (empty($company)) {
-            return ['success' => false, 'error' => 'Kontaktpersonens namn är obligatoriskt.'];
+        if ($title === '') {
+            return ['success' => false, 'error' => 'Uppgiftens namn är obligatoriskt.'];
         }
 
         if ($domain !== '') {
             $domain = $this->formatDomain($domain);
         }
 
-        // 1. Kundhantering (spara / uppdatera)
-        if ($saveCust) {
+        // 1. Spara namngivna kontaktpersoner så att de kan väljas på fler uppgifter.
+        if ($company !== '') {
             $escComp = self::escape($company);
             $escDom  = self::escape($domain);
             $escOrg  = self::escape($org);
@@ -1071,7 +1099,7 @@ class main extends database
                 }
             }
             if ($existingId === 0) {
-                $check = self::query("SELECT id FROM customers WHERE name = '$escComp' LIMIT 1");
+                $check = self::query("SELECT id FROM customers WHERE name = '$escComp' AND COALESCE(org, '') = '$escOrg' LIMIT 1");
                 if ($check && $check->numrows() > 0) {
                     $row = $check->assoc();
                     $existingId = (int)$row['id'];
@@ -1079,17 +1107,23 @@ class main extends database
             }
 
             if ($existingId > 0) {
-                self::query("UPDATE customers SET name = '$escComp', url = '$escDom', org = '$escOrg', contact = '$escCont', admin_username = '$escAdm', admin_password = '$escPass' WHERE id = '$existingId'");
+                $saved = self::$mysql->query("UPDATE customers SET name = '$escComp', url = '$escDom', org = '$escOrg', contact = '$escCont', admin_username = '$escAdm', admin_password = '$escPass' WHERE id = '$existingId'");
             } else {
-                self::query("INSERT INTO customers (name, url, org, contact, admin_username, admin_password) VALUES ('$escComp', '$escDom', '$escOrg', '$escCont', '$escAdm', '$escPass')");
+                $saved = self::$mysql->query("INSERT INTO customers (name, url, org, contact, admin_username, admin_password) VALUES ('$escComp', '$escDom', '$escOrg', '$escCont', '$escAdm', '$escPass')");
+            }
+            if (!$saved) {
+                return ['success' => false, 'error' => 'Kunde inte spara kontaktpersonen.'];
             }
         }
 
         // 2. Skapa order
+        $escTitle   = self::escape($title);
         $escCompany = self::escape($company);
         $escDomain  = self::escape($domain);
-        $escAdmin   = self::escape($admin !== '' ? $admin : 'tomt');
-        $escPass    = self::escape($pass !== '' ? $pass : 'tomt');
+        $escOrg     = self::escape($org);
+        $escContact = self::escape($contact);
+        $escAdmin   = self::escape($admin);
+        $escPass    = self::escape($pass);
         $escDesc    = self::escape($desc);
         $date       = date("Y-m-d H:i");
         $relPath    = 'media/order_' . date("ymd_His") . '_' . rand(100, 999);
@@ -1106,13 +1140,12 @@ class main extends database
         }
         $legacyMessage = self::escape(implode('$', $cleanSteps));
 
-        self::query("INSERT INTO query 
-            (Name, Hostname, Info, status, admin, password, Prio, worktime, worker_name_id, date, messageToDev, Path, creator)
+        $inserted = self::$mysql->query("INSERT INTO query
+            (Name, Hostname, Info, status, admin, password, Prio, worktime, worker_name_id, date, messageToDev, Path, creator, contact_name, contact_org, contact_details)
             VALUES
-            ('$escCompany', '$escDomain', '$escDesc', 'ongoing', '$escAdmin', '$escPass', '$asap', '0', '$worker', '$date', '$legacyMessage', '$relPath', '$creator')");
+            ('$escTitle', '$escDomain', '$escDesc', 'ongoing', '$escAdmin', '$escPass', '$asap', '0', '$worker', '$date', '$legacyMessage', '$relPath', '$creator', '$escCompany', '$escOrg', '$escContact')");
 
-        $getOrderId = self::query("SELECT id FROM query WHERE creator = '$creator' ORDER BY id DESC LIMIT 1")->assoc();
-        $orderId = (int)($getOrderId['id'] ?? 0);
+        $orderId = $inserted ? (int)self::$mysql->insert_id : 0;
 
         if ($orderId <= 0) {
             return ['success' => false, 'error' => 'Kunde inte skapa ordern i databasen.'];
@@ -1173,9 +1206,11 @@ class main extends database
             if (!empty($workerData['email'])) {
                 $mailer = new Mailer($this->mailServer);
                 $creatorName = $_SESSION['user']['username'] ?? 'En kollega';
-                $subject = "Ny uppgift tilldelad: $company";
+                $subject = "Ny uppgift tilldelad: $title";
                 $body = "<h2>Du har tilldelats en ny uppgift</h2>"
-                      . "<p><strong>Kontaktperson:</strong> " . htmlspecialchars($company) . "</p>"
+                      . "<p><strong>Uppgift:</strong> " . htmlspecialchars($title) . "</p>"
+                      . ($company ? "<p><strong>Kontaktperson:</strong> " . htmlspecialchars($company) . "</p>" : "")
+                      . ($contact ? "<p><strong>Kontaktuppgifter:</strong> " . htmlspecialchars($contact) . "</p>" : "")
                       . ($domain ? "<p><strong>Webb:</strong> " . htmlspecialchars($domain) . "</p>" : "")
                       . "<p><strong>Tilldelad av:</strong> " . htmlspecialchars($creatorName) . "</p>"
                       . ($asap === 'asap' ? "<p style='color:red;'><strong>OBS: Akut uppgift!</strong></p>" : "")

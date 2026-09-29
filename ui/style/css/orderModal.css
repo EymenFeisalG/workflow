@@ -625,6 +625,49 @@
 }
 
 /* Customer Search & Dropdown */
+.optionalOrderSummary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    list-style: none;
+}
+
+.optionalOrderSummary::-webkit-details-marker {
+    display: none;
+}
+
+.optionalOrderPlus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.optionalOrderDetails[open] .optionalOrderPlus {
+    transform: rotate(45deg);
+}
+
+.optionalOrderContent {
+    padding-top: 1rem;
+}
+
+.orderContactHint {
+    margin: 0.65rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: #64748b;
+}
+
 .customerSearchWrapper {
     position: relative;
     width: 100%;
@@ -704,7 +747,7 @@
     padding: 0;
 }
 
-/* Fällbara tekniska uppgifter (WP / Admin) */
+/* Fällbara inloggningsuppgifter */
 .techCredentialsDetails {
     margin-top: 0.65rem;
     margin-bottom: 0.875rem;

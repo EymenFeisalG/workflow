@@ -42,7 +42,7 @@
 
     <script defer src="ui/js/general.js"></script>
 
-    <script src="ui/js/changeorder.js"></script>
+    <script src="ui/js/changeorder.js?v=2.7"></script>
 
 
 
@@ -69,9 +69,9 @@
 
         <div class="fields">
 
-            <input type="text" value="<?php echo $orderData['Name']; ?>" required placeholder="Kontaktpersonens namn" class="name">
+            <input type="text" value="<?php echo htmlspecialchars($orderData['Name'], ENT_QUOTES, 'UTF-8'); ?>" required placeholder="Uppgiftens namn" class="name">
 
-            <input type="text" value="<?php echo $orderData['Hostname']; ?>" required placeholder="Webbadress" class="host">
+            <input type="text" value="<?php echo htmlspecialchars($orderData['Hostname'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Webbadress (valfritt)" class="host">
 
         </div>
 
@@ -79,9 +79,15 @@
 
         <div class="fields">
 
-            <input type="text" value="<?php echo $orderData['admin']; ?>" placeholder="Admin namn"  class="admin_name">
+            <input type="text" value="<?php echo htmlspecialchars($orderData['contact_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="Kontaktperson (valfritt)" class="contact_name">
 
-            <input type="text" value="<?php echo $orderData['password']; ?>" placeholder="Admin lösenord"  class="admin_password">
+            <input type="text" value="<?php echo htmlspecialchars($orderData['contact_org'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="Företag / org.nummer" class="contact_org">
+
+            <input type="text" value="<?php echo htmlspecialchars($orderData['contact_details'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="Kontaktuppgifter / e-post" class="contact_details">
+
+            <input type="text" value="<?php echo htmlspecialchars(($orderData['admin'] ?? '') === 'tomt' ? '' : $orderData['admin'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Användarnamn (valfri tjänst)"  class="admin_name">
+
+            <input type="password" value="<?php echo htmlspecialchars(($orderData['password'] ?? '') === 'tomt' ? '' : $orderData['password'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Lösenord (valfri tjänst)"  class="admin_password">
 
         </div>
 

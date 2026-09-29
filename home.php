@@ -21,7 +21,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="ui/style/css/app.css?v=2.6" rel="stylesheet">
+    <link href="ui/style/css/app.css?v=2.7" rel="stylesheet">
     <script>
         workflow = false;
         var Direction = "<?php echo $_GET['dir']; ?>";
@@ -34,11 +34,11 @@
         var TeamWorkers = <?php echo json_encode($main->getWorkersList(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
     </script>
     <link href="ui/style/css/general.css" rel="stylesheet">
-    <link href="ui/style/css/orderModal.css?v=2.6" rel="stylesheet">
+    <link href="ui/style/css/orderModal.css?v=2.7" rel="stylesheet">
     <link href="ui/style/css/macDock.css?v=2.6" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
-    <script src="ui/js/orderModal.js?v=2.6"></script>
+    <script src="ui/js/orderModal.js?v=2.7"></script>
     <script src="ui/js/macDock.js?v=2.6"></script>
     <script src="ui/js/app.js?v=2.6"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -291,61 +291,66 @@
                 <div class="orderModalBody">
                     <div class="paperSheet">
 
-                        <!-- Kontaktperson -->
+                        <!-- Uppgift -->
                         <div class="paperSection">
-                            <div class="orderModalGroup customerSearchWrapper">
-                                <label class="orderModalLabel" for="orderCustomerSearch">Sök kontaktperson</label>
-                                <input type="text" id="orderCustomerSearch" class="orderModalInput" placeholder="Sök kontaktperson..." autocomplete="off">
-                                <div id="customerDropdown" class="customerDropdown"></div>
-                                <div id="customerSelectedBadge" class="customerSelectedBadge">
-                                    <span>Kopplad till <strong id="selectedCustomerName"></strong></span>
-                                    <button type="button" id="customerResetBtn" class="customerResetBtn">Rensa</button>
-                                </div>
+                            <div class="orderModalGroup">
+                                <label class="orderModalLabel" for="orderTitle">Uppgiftens namn *</label>
+                                <input type="text" id="orderTitle" name="order_title" class="orderModalInput" placeholder="Vad ska göras?" maxlength="225" required>
                             </div>
-
-                            <div class="orderModalRow twoCol">
-                                <div class="orderModalGroup">
-                                    <label class="orderModalLabel" for="orderCompanyName">Kontaktperson *</label>
-                                    <input type="text" id="orderCompanyName" name="company_name" class="orderModalInput" placeholder="Namn på kontaktperson" required>
-                                </div>
-                                <div class="orderModalGroup">
-                                    <label class="orderModalLabel" for="orderOrg">Företag / Org.nummer</label>
-                                    <input type="text" id="orderOrg" name="org" class="orderModalInput" placeholder="Företagsnamn eller 556XXX-XXXX">
-                                </div>
-                            </div>
-
-                            <div class="orderModalRow twoCol">
-                                <div class="orderModalGroup">
-                                    <label class="orderModalLabel" for="orderCompanyDomain">Webbadress</label>
-                                    <input type="text" id="orderCompanyDomain" name="company_domain" class="orderModalInput" placeholder="exempel.se">
-                                </div>
-                                <div class="orderModalGroup">
-                                    <label class="orderModalLabel" for="orderContact">Kontaktuppgifter / E-post</label>
-                                    <input type="text" id="orderContact" name="contact" class="orderModalInput" placeholder="kontakt@foretag.se">
-                                </div>
-                            </div>
-
-                            <details class="techCredentialsDetails">
-                                <summary class="techCredentialsSummary">
-                                    <span>Inloggningsuppgifter (valfritt)</span>
-                                </summary>
-                                <div class="orderModalRow twoCol" style="margin-top: 0.75rem;">
-                                    <div class="orderModalGroup">
-                                        <label class="orderModalLabel" for="orderAdminUser">WP / Admin Användare</label>
-                                        <input type="text" id="orderAdminUser" name="company_admin_username" class="orderModalInput" placeholder="Användarnamn">
-                                    </div>
-                                    <div class="orderModalGroup">
-                                        <label class="orderModalLabel" for="orderAdminPass">WP / Admin Lösenord</label>
-                                        <input type="text" id="orderAdminPass" name="company_admin_password" class="orderModalInput" placeholder="Lösenord">
-                                    </div>
-                                </div>
-                            </details>
-
-                            <label class="orderModalCheckboxLabel">
-                                <input type="checkbox" id="orderSaveCustomer" class="orderModalCheckbox" checked>
-                                <span>Spara / uppdatera i kontaktregistret</span>
-                            </label>
                         </div>
+
+                        <!-- Kontaktperson -->
+                        <details class="paperSection optionalOrderDetails" id="orderContactDetails">
+                            <summary class="optionalOrderSummary"><span class="optionalOrderPlus" aria-hidden="true">+</span><span>Kontaktperson (valfritt)</span></summary>
+                            <div class="optionalOrderContent">
+                                <div class="orderModalGroup customerSearchWrapper">
+                                    <label class="orderModalLabel" for="orderCustomerSearch">Sök sparad kontaktperson</label>
+                                    <input type="text" id="orderCustomerSearch" class="orderModalInput" placeholder="Sök kontaktperson..." autocomplete="off">
+                                    <div id="customerDropdown" class="customerDropdown"></div>
+                                    <div id="customerSelectedBadge" class="customerSelectedBadge">
+                                        <span>Kopplad till <strong id="selectedCustomerName"></strong></span>
+                                        <button type="button" id="customerResetBtn" class="customerResetBtn">Rensa</button>
+                                    </div>
+                                </div>
+
+                                <div class="orderModalRow twoCol">
+                                    <div class="orderModalGroup">
+                                        <label class="orderModalLabel" for="orderCompanyName">Kontaktperson</label>
+                                        <input type="text" id="orderCompanyName" name="company_name" class="orderModalInput" placeholder="Namn på kontaktperson">
+                                    </div>
+                                    <div class="orderModalGroup">
+                                        <label class="orderModalLabel" for="orderOrg">Företag / Org.nummer</label>
+                                        <input type="text" id="orderOrg" name="org" class="orderModalInput" placeholder="Företagsnamn eller 556XXX-XXXX">
+                                    </div>
+                                </div>
+
+                                <div class="orderModalRow twoCol">
+                                    <div class="orderModalGroup">
+                                        <label class="orderModalLabel" for="orderContact">Kontaktuppgifter / E-post</label>
+                                        <input type="text" id="orderContact" name="contact" class="orderModalInput" placeholder="kontakt@foretag.se">
+                                    </div>
+                                    <div class="orderModalGroup">
+                                        <label class="orderModalLabel" for="orderCompanyDomain">Webbadress</label>
+                                        <input type="text" id="orderCompanyDomain" name="company_domain" class="orderModalInput" placeholder="exempel.se">
+                                    </div>
+                                </div>
+
+                                <details class="techCredentialsDetails">
+                                    <summary class="techCredentialsSummary">Inloggningsuppgifter (valfritt, för valfri tjänst)</summary>
+                                    <div class="orderModalRow twoCol" style="margin-top: 0.75rem;">
+                                        <div class="orderModalGroup">
+                                            <label class="orderModalLabel" for="orderAdminUser">Användarnamn</label>
+                                            <input type="text" id="orderAdminUser" name="company_admin_username" class="orderModalInput" placeholder="Användarnamn">
+                                        </div>
+                                        <div class="orderModalGroup">
+                                            <label class="orderModalLabel" for="orderAdminPass">Lösenord</label>
+                                            <input type="password" id="orderAdminPass" name="company_admin_password" class="orderModalInput" placeholder="Lösenord" autocomplete="new-password">
+                                        </div>
+                                    </div>
+                                </details>
+                                <p class="orderContactHint">Kontaktpersoner med namn sparas automatiskt och kan väljas till fler uppgifter.</p>
+                            </div>
+                        </details>
 
                         <!-- Uppdragsbeskrivning -->
                         <div class="paperSection">

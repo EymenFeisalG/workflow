@@ -25,10 +25,10 @@
         // Återställ utkast om det finns och formuläret inte redan är fyllt
         restoreDraft();
 
-        if ($('#orderCompanyName').val().trim() !== '') {
+        if ($('#orderTitle').val().trim() !== '') {
             $('#orderDesc').focus();
         } else {
-            $('#orderCustomerSearch').focus();
+            $('#orderTitle').focus();
         }
     };
 
@@ -41,10 +41,13 @@
     };
 
     function isFormDirty() {
-        return $('#orderCompanyName').val().trim() !== '' ||
+        return $('#orderTitle').val().trim() !== '' ||
+               $('#orderCompanyName').val().trim() !== '' ||
                $('#orderCompanyDomain').val().trim() !== '' ||
                $('#orderOrg').val().trim() !== '' ||
                $('#orderContact').val().trim() !== '' ||
+               $('#orderAdminUser').val().trim() !== '' ||
+               $('#orderAdminPass').val().trim() !== '' ||
                $('#orderDesc').val().trim() !== '' ||
                orderSteps.length > 0 ||
                orderImages.length > 0 ||
@@ -60,6 +63,7 @@
         $('#customerSelectedBadge').hide();
         $('#customerDropdown').removeClass('open').empty();
         $('#asapSwitchWrapper').removeClass('active');
+        $('#orderContactDetails').prop('open', false);
         $('.techCredentialsDetails').prop('open', false);
         renderSteps();
         renderImagePreviews();
@@ -79,6 +83,7 @@
         }
 
         const draft = {
+            orderTitle: $('#orderTitle').val().trim(),
             selectedCustomerId: selectedCustomerId,
             selectedCustomerName: $('#selectedCustomerName').text(),
             companyName: $('#orderCompanyName').val().trim(),
@@ -87,7 +92,6 @@
             contact: $('#orderContact').val().trim(),
             adminUser: $('#orderAdminUser').val().trim(),
             adminPass: $('#orderAdminPass').val().trim(),
-            saveCustomer: $('#orderSaveCustomer').is(':checked'),
             worker: selectedWorkerId,
             workerName: $('#delegationPillName').text(),
             asap: $('#orderAsapCheck').is(':checked'),
@@ -117,7 +121,13 @@
             const draft = JSON.parse(raw);
             if (!draft) return false;
 
-            const hasContent = (draft.companyName && draft.companyName.trim() !== '') ||
+            const hasContent = (draft.orderTitle && draft.orderTitle.trim() !== '') ||
+                               (draft.companyName && draft.companyName.trim() !== '') ||
+                               (draft.companyDomain && draft.companyDomain.trim() !== '') ||
+                               (draft.org && draft.org.trim() !== '') ||
+                               (draft.contact && draft.contact.trim() !== '') ||
+                               (draft.adminUser && draft.adminUser.trim() !== '') ||
+                               (draft.adminPass && draft.adminPass.trim() !== '') ||
                                (draft.desc && draft.desc.trim() !== '') ||
                                (draft.steps && draft.steps.length > 0) ||
                                (draft.selectedCustomerId > 0) ||
@@ -128,12 +138,18 @@
                 return false;
             }
 
+            $('#orderTitle').val(draft.orderTitle || '');
             $('#orderCompanyName').val(draft.companyName || '');
             $('#orderCompanyDomain').val(draft.companyDomain || '');
             $('#orderOrg').val(draft.org || '');
             $('#orderContact').val(draft.contact || '');
             $('#orderAdminUser').val(draft.adminUser || '');
             $('#orderAdminPass').val(draft.adminPass || '');
+
+            if (draft.companyName || draft.org || draft.contact || draft.companyDomain ||
+                draft.adminUser || draft.adminPass || draft.selectedCustomerId > 0) {
+                $('#orderContactDetails').prop('open', true);
+            }
 
             if ((draft.adminUser && draft.adminUser.trim() !== '') || (draft.adminPass && draft.adminPass.trim() !== '')) {
                 $('.techCredentialsDetails').prop('open', true);
@@ -153,7 +169,6 @@
                 $('#asapSwitchWrapper').removeClass('active');
             }
 
-            $('#orderSaveCustomer').prop('checked', draft.saveCustomer !== false);
             $('#orderDesc').val(draft.desc || '');
 
             if (draft.selectedCustomerId > 0) {
@@ -411,6 +426,13 @@
         const $input = $('#orderCustomerSearch');
         const $dropdown = $('#customerDropdown');
 
+        $('#orderCompanyName').on('input', function () {
+            if (selectedCustomerId > 0) {
+                selectedCustomerId = 0;
+                $('#customerSelectedBadge').hide();
+            }
+        });
+
         $input.on('input focus', function () {
             const query = $(this).val().trim();
             clearTimeout(searchDebounceTimer);
@@ -468,7 +490,6 @@
             $('#orderContact').val('');
             $('#orderAdminUser').val('');
             $('#orderAdminPass').val('');
-            $('#orderSaveCustomer').prop('checked', true);
             queueSaveDraft();
         });
     }
@@ -491,7 +512,7 @@
 
         $('#selectedCustomerName').text(customer.name);
         $('#customerSelectedBadge').css('display', 'flex');
-        $('#orderSaveCustomer').prop('checked', true);
+        $('#orderContactDetails').prop('open', true);
 
         queueSaveDraft();
     }
@@ -801,17 +822,19 @@
         $('#orderModalForm').on('submit', function (e) {
             e.preventDefault();
 
-            const companyName = $('#orderCompanyName').val().trim();
-            if (companyName === '') {
-                alert('Vänligen ange kontaktpersonens namn.');
-                $('#orderCompanyName').focus();
+            const orderTitle = $('#orderTitle').val().trim();
+            if (orderTitle === '') {
+                alert('Vänligen ange uppgiftens namn.');
+                $('#orderTitle').focus();
                 return;
             }
+            const companyName = $('#orderCompanyName').val().trim();
 
             const $submitBtn = $('#orderSubmitBtn');
             $submitBtn.addClass('loading').prop('disabled', true);
 
             const formData = new FormData();
+            formData.append('order_title', orderTitle);
             formData.append('company_name', companyName);
             formData.append('company_domain', $('#orderCompanyDomain').val().trim());
             formData.append('org', $('#orderOrg').val().trim());
@@ -821,7 +844,6 @@
             formData.append('worker', selectedWorkerId);
             formData.append('order_desc', $('#orderDesc').val().trim());
             formData.append('asap', $('#orderAsapCheck').is(':checked') ? 'asap' : 'normal');
-            formData.append('saveCustomer', $('#orderSaveCustomer').is(':checked') ? 'true' : 'false');
             formData.append('customer_id', selectedCustomerId);
             formData.append('steps', JSON.stringify(orderSteps));
 
@@ -850,6 +872,7 @@
                         }
 
                         // Rensa utkast och stäng modal
+                        clearTimeout(draftSaveTimer);
                         clearDraft(true);
                         resetOrderModal();
                         $('#orderModalOverlay').removeClass('active');

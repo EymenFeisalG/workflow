@@ -69,6 +69,7 @@ jobs:
             **/.github/**
             **/.env*
             **/DEBUG/**
+            **/migrations/**
             **/media/**
             **/README.md
             **/web.config

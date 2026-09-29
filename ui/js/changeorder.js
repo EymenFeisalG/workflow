@@ -37,6 +37,10 @@ $(document).ready(function() {
 
         var adminPassword = $('.admin_password').val();
 
+        var contactName = $('.contact_name').val();
+        var contactOrg = $('.contact_org').val();
+        var contactDetails = $('.contact_details').val();
+
         var devName = $('.devName').val();
 
         var markAsap = ($('.markAsap').is(':checked')) ? 'asap' : 'normal';
@@ -47,7 +51,7 @@ $(document).ready(function() {
 
         if(name =="")
         {
-            message("Fyll i namn");
+            message("Fyll i uppgiftens namn");
             return false;
         }
 
@@ -70,6 +74,12 @@ $(document).ready(function() {
             "company_admin_username": adminName,
 
             "company_admin_password": adminPassword,
+
+            "contact_name": contactName,
+
+            "contact_org": contactOrg,
+
+            "contact_details": contactDetails,
 
             "asap": markAsap,
 
