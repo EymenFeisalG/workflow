@@ -9,13 +9,8 @@ if(isset($_SESSION['focusOrder']))
     unset($_SESSION['focusOrder']);
 
 
-if($_POST['hours'] == "") $_POST['hours'] = 0;
-if($_POST['minutes'] == "") $_POST['minutes'] = 0;
+$orderid = $_POST['orderid'] ?? 0;
+$comment = $_POST['comment'] ?? '';
+$action  = $_POST['action'] ?? '';
 
-$_POST['minutes'] = $_POST['minutes'] ?? '0';
-
-$time = $_POST['hours'] . ':' . $_POST['minutes'];
-
-
-
-$main->addTimeWorker($time, $_POST['orderid'], $_POST['comment'], $_POST['action']);
+$main->addTimeWorker('0:0', $orderid, $comment, $action);

@@ -1,8 +1,10 @@
 <?php
     require 'global.php';
     
-    if(!$auth->Maintenance())
+    if(!$auth->Maintenance()) {
         header('location: index.php');
+        exit;
+    }
 ?>
 
 <!doctype html>

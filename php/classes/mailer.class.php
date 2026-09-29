@@ -37,7 +37,17 @@ class mailer extends database
 
     public function logEmail($sender, $receiver, $message, $subject, $errorlog, $status)
     {  
-        self::query("INSERT INTO workgui_email_log (sender, receiver, subject, message, error_message, status) VALUES ('".$sender."', '".$receiver."', '".$subject."', '".$message."', '".$errorlog."', '".$status."')");
+        try {
+            $sender = self::escape($sender);
+            $receiver = self::escape($receiver);
+            $subject = self::escape($subject);
+            $message = self::escape($message);
+            $errorlog = self::escape($errorlog);
+            $status = self::escape($status);
+            self::query("INSERT INTO workgui_email_log (sender, receiver, subject, message, error_message, status) VALUES ('".$sender."', '".$receiver."', '".$subject."', '".$message."', '".$errorlog."', '".$status."')");
+        } catch (\Throwable $e) {
+            error_log("Failed to log email: " . $e->getMessage());
+        }
     }
 
     public function sendEmail($email, $subject, $message)

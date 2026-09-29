@@ -521,7 +521,7 @@ hr
 
 
 
-   .badge
+   .LeftBar .badge
 
    {
 
@@ -612,8 +612,7 @@ hr
 
 
 
- .addOrder
-
+.LeftBar .addOrder
 {
     margin: 5px 0 15px;
     width: 100%;
@@ -628,19 +627,14 @@ hr
     color: #fff;
     cursor: pointer;
     text-align: center;
-    
 }
 
-.addOrder:hover
+.LeftBar .addOrder:hover
 {
     box-shadow: 2px 2px 10px #000;
 }
 
-
-
-
-#parentStats
-
+.LeftBar #parentStats
 {
     border-radius: 3px 3px 0 0;
     background-color: rgb(24, 22, 22);
@@ -655,8 +649,7 @@ hr
     width: 75%;
 }
 
-.badge
-
+.LeftBar .badge
 {
     width: 100%;
     float: left;
@@ -666,29 +659,22 @@ hr
     font-size: 13px;
     font-weight: bold;
     cursor: pointer;
-    width: 100%;
     text-transform: uppercase !important;
 }
 
-.badge label 
+.LeftBar .badge label 
 {
     float: left;
     margin-top: 8px;
-
 }
 
-.badge:hover
+.LeftBar .badge:hover
 {
     background-color: rgb(38, 118, 189);
     color: rgb(92, 170, 238);
 }
 
-.badge:last-child
-{
-    margin: none;
-}
-
-.active
+.LeftBar .active
 {
     background-color: #FFF !important;
     color: #000;

@@ -1,0 +1,64 @@
+name: Deploy Workflow via FTPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workflow-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Upload to production
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out the committed version
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Check deployment configuration
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR }}
+        run: |
+          for name in FTP_SERVER FTP_USERNAME FTP_PASSWORD FTP_SERVER_DIR; do
+            if [ -z "${!name}" ]; then
+              echo "Missing deployment setting: $name" >&2
+              exit 1
+            fi
+          done
+          case "$FTP_SERVER_DIR" in
+            */) ;;
+            *) echo 'FTP_SERVER_DIR must end with /' >&2; exit 1 ;;
+          esac
+
+      - name: Upload committed application files
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ vars.FTP_PORT || '21' }}
+          server-dir: ${{ vars.FTP_SERVER_DIR }}
+          state-name: .workflow-ftp-deploy-state.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            **/.env*
+            **/DEBUG/**
+            **/media/**
+            **/README.md
+            **/web.config

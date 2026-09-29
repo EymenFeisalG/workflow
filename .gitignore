@@ -1,0 +1,16 @@
+# Känsliga miljövariabler
+.env
+.env.local
+.env.*.local
+
+# Debug och tester (enligt projektstandard)
+DEBUG/
+
+# Operativsystem och editorer
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+resources/

@@ -67,6 +67,11 @@ class auth extends database
     
     public function hasRight($cmd, $allowAll = true)
     {
+        if(!isset($_SESSION['rights']) || !is_array($_SESSION['rights']))
+        {
+            return false;
+        }
+
         // check if has all
         if($allowAll)
         {
@@ -122,22 +127,24 @@ class auth extends database
             define('login_req', false); 
 
         if(!login_req && isset($_SESSION['user']))
+        {
             header('location: home.php');
-
+            exit;
+        }
         elseif(login_req && !isset($_SESSION['user']))
+        {
             header('location: index.php');
+            exit;
+        }
 
        if(isset($_SESSION['user']))
        {
-            if(isset($_SESSION['addOrder']) || isset($_SESSION['changeOrder']) && isset($_SESSION['addOrder']))
+            if(isset($_SESSION['addOrder']))
             {
-                if(isset($_SESSION['changeOrder']))
-                    unset($_SESSION['changeOrder']);
-                
-                header("location: order.php");
+                unset($_SESSION['addOrder']);
             }
 
-            if(isset($_SESSION['user']) && isset($_SESSION['changeOrder']))
+            if(isset($_SESSION['changeOrder']))
             {
                 header("location: changeorder.php");
             }
@@ -189,7 +196,7 @@ class auth extends database
         }
     }
 
-    public function login($username, $password)
+    public function login($username, $password, $isAjax = true)
     {
         $username = self::escape($username);
         $password = self::escape($password, true);
@@ -223,11 +230,13 @@ class auth extends database
 
             $this->initRights();
             
-            echo "success";
+            if($isAjax) echo "success";
+            return true;
         }
         else
         {
-            echo "fail";
+            if($isAjax) echo "fail";
+            return false;
         }
     }
 
@@ -253,9 +262,10 @@ class auth extends database
                 // delete seckey
                 self::query("DELETE FROM register_users WHERE seckey = '".$seckey."'");
                 
-                $this->login($data['username'], $rawPassword);
+                $this->login($data['username'], $rawPassword, false);
                 
                 header('location: home.php');
+                exit;
                 
             }
             else

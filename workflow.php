@@ -10,11 +10,6 @@
     else
         $_GET['dir'] = $dir = $_SESSION['focusOrder']['dir'];
 
-   // Get working time
-   $timeWorked_attest = $main->MyWorkingTime($_SESSION['user']['userid']);
-   $salary = $main->countSalary($timeWorked_attest['totalTime']); 
-   $timeWorked_paid = $main->MyWorkingTime($_SESSION['user']['userid'], true); 
-
 ?>
 
 <!DOCTYPE html>
@@ -79,7 +74,7 @@
 
 <div class="container">
 
-    <button class="dark-button" onclick="location.href='/home'"><</button>
+    <button class="dark-button" onclick="location.href='home.php'">&lt;&lt;</button>
         
         <div class="orders">
 
@@ -93,19 +88,12 @@
         <div class="modalFocus" <?php if(isset($_SESSION['focusOrder'])) echo 'style="display: block;'; ?>></div>
         <div class="modal">
              <form class="timeForm" method="post">
-                <h5>Arbetad tid</h5>
-                <br>
-                <div class="fields">
-                <input type="number" min="0"  autocomplete="off" placeholder="h" class="hours" name="hours"> timmar
-                <input type="number" min="0"  autocomplete="off" step="30" placeholder="m" class="minutes" name="minutes"> minuter
-                <div class="clear"></div>
-                </div>
                 <input type="text" name="orderid" class="orderid" value="" hidden>
                 <input type="text" name="action" class="action" value="" hidden>
-                <h5>Skriv ett meddelande till Namo</h5>
+                <h5 class="modalTitle">Meddelande / Kommentar (valfritt)</h5>
                 <textarea class="content" name="comment"></textarea>
                 <input type="submit" value="Spara" class="saveTime">
-                <input type="submit" class="closeTime close" value="Ångra">
+                <input type="button" class="closeTime close" value="Ångra">
             </form>
         </div>
 

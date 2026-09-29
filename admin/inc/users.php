@@ -52,8 +52,6 @@
                         <div class="form">
                         <label>Användarnamn</label>
                        <input type="text" required class="username">
-                       <label>Timlön i kronor</label>
-                       <input type="number" value="0" required class="salary">
                        <label>Email</label>
                        <input type="email" required class="email">
                        <label>Roll</label>
@@ -72,7 +70,7 @@
         {
             var username = $.trim($('.form .username').val());
             var email = $.trim($('.form .email').val());
-            var salary = $.trim($('.form .salary').val());
+            var salary = 0;
             var role = $.trim($('.form .role').val());
 
             $.post('functions/addUser.php', {'username': username, 'email': email, 'role': role, 'salary': salary}, function(success)

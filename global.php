@@ -28,11 +28,11 @@ if($auth->Maintenance())
     $url = $_SERVER["REQUEST_URI"]; 
     $pos = strrpos($url, "Maintenance.php"); 
     
-    if($pos == false) {
-        header('location: Maintenance.php');
+    if($pos === false) {
+        $prefix = file_exists('Maintenance.php') ? '' : '../';
+        header('location: ' . $prefix . 'Maintenance.php');
+        exit;
     }
-
-
 }
 
 

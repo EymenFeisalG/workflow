@@ -69,7 +69,7 @@
 
         <div class="fields">
 
-            <input type="text" value="<?php echo $orderData['Name']; ?>" required placeholder="Kundens namn" class="name">
+            <input type="text" value="<?php echo $orderData['Name']; ?>" required placeholder="Kontaktpersonens namn" class="name">
 
             <input type="text" value="<?php echo $orderData['Hostname']; ?>" required placeholder="Webbadress" class="host">
 

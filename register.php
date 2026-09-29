@@ -10,6 +10,14 @@
 
    $auth->userLoginCheck();
 
+   $registerError = '';
+   if(isset($_POST['login']))
+   {
+       $_SESSION['temp_seckey'] = $_POST['Seckey'];
+       ob_start();
+       $auth->register($_POST['Seckey'], $_POST['password'], $_POST['cPassword']); 
+       $registerError = ob_get_clean();
+   }
 
 ?>
 
@@ -35,10 +43,9 @@
             
         <form method="post">
                 <?php 
-                if(isset($_POST['login']))
+                if(!empty($registerError))
                 {
-                    $_SESSION['temp_seckey'] = $_POST['Seckey'];
-                    $auth->register($_POST['Seckey'], $_POST['password'], $_POST['cPassword']); 
+                    echo $registerError;
                 }
                 ?>
                 <h5>Aktiveringskod</h5>

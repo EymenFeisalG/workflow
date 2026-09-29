@@ -1,42 +1,20 @@
 $('document').ready(function()
 {
-    let dir = 'time';
+    let dir = 'users';
 
     // load initial page
-        loadPage(dir);
+    loadPage(dir);
 
     function loadPage(dir)
     {
         switch(dir)
-            {
-            
-                case 'pay':
-
-                $.get('inc/payments.php', function(success)
-                {
-                    $('.jsHook').html(success);
-                });
-
-                break;
-
-            case 'time':
-            
-                $.get('inc/timeWorked.php', function(success)
-                {
-                    $('.jsHook').html(success);
-                });
-
-            break;
-
+        {
             case 'users':
-            
-            $.get('inc/users.php', function(success)
-            {
-                $('.jsHook').html(success);
-            });
-
-        break;
-        
+                $.get('inc/users.php', function(success)
+                {
+                    $('.jsHook').html(success);
+                });
+                break;
         }
     }
 

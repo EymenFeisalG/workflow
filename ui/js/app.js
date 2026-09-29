@@ -1,448 +1,545 @@
-$(document).ready(function(){
+/**
+ * Workflow Application Core Engine (Clean & Modernized)
+ * - Dynamic AJAX Section & Category Loading with Menu Button Fade Pulse
+ * - Workflow Kanban & Priority Drag-and-Drop (SortableJS)
+ * - SPA Browser History (PushState & PopState)
+ * - Order Actions: Steps, Attest, Rework, Delete, Restore, Gallery, Focus
+ * - Cleaned legacy dependencies (TinyMCE removed from modal, obsolete menus purged)
+ */
+$(document).ready(function () {
+    'use strict';
 
-    
-tinymce.init({
-
-    selector: '.content',  // change this value according to your HTML
-
-    language: 'sv_SE',
-
-    promotion: false,
-
-    height: 400,
-    width: 800
-
-  });
-
-
+    // Application State Variables
+    let currentDir = (typeof Direction !== 'undefined' && Direction) ? Direction : 'ongoing';
     let stepCheck = 0;
-    let orderId = $('#focusOrder').text();
-    let justOk = {'mode': 'none', 'justOk': true};
-    let orderFocus = (orderInFocus == "true") ? true : false;
-    let dir = Direction;
+    let justOk = { mode: 'none', justOk: true };
+    let orderFocus = (typeof orderInFocus !== 'undefined' && orderInFocus === 'true');
+    let focusedOrderId = $('#focusOrder').text().trim();
+    let workflowSortable = null;
+    let isSectionLoading = false;
 
+    // Initialize initial section from URL parameter or default
+    initCurrentSection();
 
-    console.log(workflow);
+    /* ==========================================================================
+       1. Dynamic AJAX Section Loading Engine
+       ========================================================================== */
 
+    /**
+     * Determines starting section from URL query or global Direction
+     */
+    function initCurrentSection() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const dirParam = urlParams.get('dir');
+        if (dirParam) {
+            currentDir = dirParam;
+        }
 
-    $(document).on('click', '.yes', function()
-    {
-        switch(justOk.mode)
-        {
+        // Initial load without pushing history
+        loadSection(currentDir, false);
+    }
+
+    /**
+     * Dynamic Section Loader
+     * - Animates clicked menu button text with fading out and in pulse
+     * - Performs asynchronous AJAX content fetch
+     * - Smoothly updates .orders container with fade-in and empty states
+     * - Manages browser history and Kanban SortableJS integration
+     */
+    function loadSection(sectionUrl, pushHistory = true, $clickedBtn = null) {
+        if (!sectionUrl) return;
+
+        // Prevent redundant simultaneous requests
+        if (isSectionLoading && currentDir === sectionUrl) return;
+        isSectionLoading = true;
+
+        // Normalize section identifier
+        let requestDir = (sectionUrl === 'workflow') ? 'prio' : sectionUrl;
+
+        // 1. Locate the menu button and start text fade pulse animation
+        $('.dockTabText').removeClass('dockTextLoading');
+
+        let $targetBtn = $clickedBtn;
+        if (!$targetBtn || !$targetBtn.length) {
+            if (requestDir === 'prio') {
+                $targetBtn = $('#dockWorkflowBtn');
+            } else if (requestDir === 'canceled') {
+                $targetBtn = $('.dockSubmenuItem.recycle');
+            } else {
+                $targetBtn = $('#parentStats [data-url="' + requestDir + '"]').closest('.dockTextTab');
+            }
+        }
+
+        let $btnText = $targetBtn.find('.dockTabText');
+        if (!$btnText.length) {
+            $btnText = $targetBtn.children('span').first();
+        }
+        $btnText.addClass('dockTextLoading');
+
+        // 2. Put orders container in subtle loading state
+        const $orders = $('.orders');
+        $orders.addClass('is-loading').removeClass('ordersFadeIn');
+
+        // 3. Perform AJAX request
+        $.ajax({
+            url: 'php/functions/getOrders.php',
+            type: 'GET',
+            data: { 'dir': requestDir },
+            dataType: 'html',
+            cache: false,
+            success: function (response) {
+                currentDir = requestDir;
+
+                // Stop blinking animation
+                $btnText.removeClass('dockTextLoading');
+                $('.dockTabText').removeClass('dockTextLoading');
+
+                // Update active states across dock navigation
+                $('#parentStats .dockTextTab').removeClass('active');
+                $('#dockWorkflowBtn').removeClass('active');
+                $('.recycle').removeClass('active');
+                $('#dockMoreTrigger').removeClass('active');
+
+                if (requestDir === 'prio') {
+                    $('#dockWorkflowBtn').addClass('active');
+                } else if (requestDir === 'canceled') {
+                    $('.recycle').addClass('active');
+                    $('#dockMoreTrigger').addClass('active');
+                } else {
+                    $('#parentStats [data-url="' + requestDir + '"]').addClass('active');
+                }
+
+                // Close dock submenu if open
+                if ($('#dockSubmenuPopover').hasClass('active')) {
+                    $('#dockSubmenuPopover').removeClass('active');
+                    $('#dockMoreTrigger').attr('aria-expanded', 'false');
+                }
+
+                // Render content or empty state
+                let trimmed = (response || '').trim();
+                if (trimmed === 'empty' || trimmed === '' || trimmed === '0') {
+                    $orders.html(getEmptyMessageHtml(requestDir));
+                } else {
+                    $orders.html(trimmed);
+                    addToOrder();
+                }
+
+                // Smooth fade-in
+                $orders.removeClass('is-loading').addClass('ordersFadeIn');
+
+                // Setup or teardown Sortable for Workflow / prio
+                setupWorkflowSortable(requestDir);
+
+                // Update browser URL via pushState
+                if (pushHistory) {
+                    let newUrl = (requestDir === 'prio') ? '?dir=prio' : '?dir=' + encodeURIComponent(requestDir);
+                    window.history.pushState({ dir: requestDir }, '', newUrl);
+                }
+
+                // Scroll orders container back to top
+                $orders.scrollTop(0);
+            },
+            error: function () {
+                $btnText.removeClass('dockTextLoading');
+                $('.dockTabText').removeClass('dockTextLoading');
+                $orders.removeClass('is-loading');
+                message("Kunde inte ladda sektionen. Kontrollera anslutningen.", "Fel");
+            },
+            complete: function () {
+                isSectionLoading = false;
+            }
+        });
+    }
+
+    /**
+     * Returns a styled modern empty state message based on category
+     */
+    function getEmptyMessageHtml(dir) {
+        const titles = {
+            'all': 'Inga pågående uppdrag',
+            'ongoing': 'Inga tilldelade uppdrag',
+            'asap': 'Inga akuta uppdrag',
+            'pending': 'Inga uppdrag att granska',
+            'rework': 'Inga uppdrag för komplettering',
+            'created': 'Inga skapade uppdrag',
+            'completed': 'Inga godkända uppdrag',
+            'canceled': 'Papperskorgen är tom',
+            'prio': 'Inga uppdrag i workflow'
+        };
+        const title = titles[dir] || 'Inga uppdrag hittades';
+        return `
+            <div class="ordersEmptyState">
+                <div class="emptyIcon">📭</div>
+                <h3>${title}</h3>
+                <p>Det finns inga uppgifter att visa i den här vyn just nu.</p>
+            </div>
+        `;
+    }
+
+    /**
+     * Initializes or cleans up SortableJS for Workflow / Priority view
+     */
+    function setupWorkflowSortable(dir) {
+        if (workflowSortable) {
+            try {
+                workflowSortable.destroy();
+            } catch (err) {}
+            workflowSortable = null;
+        }
+
+        if (dir === 'prio' && typeof Sortable !== 'undefined') {
+            const container = document.querySelector('.orders');
+            if (container) {
+                workflowSortable = new Sortable(container, {
+                    animation: 160,
+                    ghostClass: 'dragging',
+                    handle: '.order',
+                    onEnd: function () {
+                        updatePriorities();
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Saves reordered priorities back to server
+     */
+    function updatePriorities() {
+        let orders = Array.from(document.querySelectorAll('.order'));
+        let orderList = orders.map((order, index) => ({
+            orderId: order.dataset.orderid,
+            priority: index + 1
+        }));
+
+        $.post('php/functions/sendPrio.php', { 'list': orderList });
+    }
+
+    // Browser Back / Forward History Navigation
+    window.addEventListener('popstate', function (event) {
+        let params = new URLSearchParams(window.location.search);
+        let dir = params.get('dir') || (typeof Direction !== 'undefined' ? Direction : 'ongoing');
+        loadSection(dir, false);
+    });
+
+    /* ==========================================================================
+       2. Dock Menu Click Bindings
+       ========================================================================== */
+
+    // Category Filter Tabs in Dock (#parentStats)
+    $(document).on('click', '#parentStats [data-url]', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        let $tab = $(this).closest('.dockTextTab');
+        let dir = $tab.data('url') || $(this).data('url');
+        loadSection(dir, true, $tab);
+    });
+
+    // Workflow Button
+    $(document).on('click', '#dockWorkflowBtn', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        loadSection('prio', true, $(this));
+    });
+
+    // Papperskorg (Recycle Bin) in Submenu
+    $(document).on('click', '.recycle', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        loadSection('canceled', true, $(this));
+    });
+
+    /* ==========================================================================
+       3. Order Steps & Confirmation Modal
+       ========================================================================== */
+
+    $(document).on('click', '.checkStep', function () {
+        stepCheck = $(this).closest('[data-stepid]').attr('data-stepid');
+        let orderId = $(this).closest('[data-steps]').attr('data-steps');
+        justOk.mode = 'steps';
+        justOk.justOk = false;
+        pageAlert("Markera ordern", "Vill du markera steget som färdigt? Beställaren kommer att meddelas.", true);
+    });
+
+    $(document).on('click', '.yes', function () {
+        switch (justOk.mode) {
             case 'steps':
-
-                if(justOk.justOk)
-                {
+                if (justOk.justOk) {
                     $('.generalModal').remove();
-                    $('[data-stepid="'+stepCheck+'"] .checkStep').prop('checked', false);
-                    justOk = 'none';
+                    $('[data-stepid="' + stepCheck + '"] .checkStep').prop('checked', false);
+                    justOk.mode = 'none';
                     return false;
                 }
 
-                let stepMsg = $('[data-stepid="'+stepCheck+'"] .stepValue').html();
+                let stepMsg = $('[data-stepid="' + stepCheck + '"] .stepValue').html();
 
-                $.post('php/functions/checkStep.php', {stepid: stepCheck, value: stepMsg}, function(success){
-
-                    if(success == 'notMine') 
-                    {   
+                $.post('php/functions/checkStep.php', { stepid: stepCheck, value: stepMsg }, function (success) {
+                    if (success === 'notMine') {
                         $('.generalModal').hide();
-                        pageAlert('Misslyckades', 'du kan inte makera steg som inte är dina', false);
+                        pageAlert('Misslyckades', 'Du kan inte markera steg som inte är dina.', false);
                         justOk.mode = 'general';
                         return false;
                     }
 
-                    $('[data-stepid="'+stepCheck+'"] .checkStep').prop('disabled', true);
-                    $('.generalModal').hide();
-                    $('.generalModal').hide();
-                    $('[data-stepid="'+stepCheck+'"] .stepValue').css('text-decoration', 'line-through');
+                    $('[data-stepid="' + stepCheck + '"] .checkStep').prop('disabled', true);
+                    $('.generalModal').remove();
+                    $('[data-stepid="' + stepCheck + '"] .stepValue').css('text-decoration', 'line-through');
 
-                    message("Steget: (" + stepMsg + ") är markerad som färdig. Ett mail skickas nu till beställaren");
+                    message("Steget är markerat som färdigt.", "Klart");
                 });
+                break;
 
-        break;
-        
-        case 'general':
+            case 'general':
+                $('.generalModal').remove();
+                justOk.mode = 'none';
+                justOk.justOk = true;
+                break;
+        }
+    });
+
+    $(document).on('click', '.no', function () {
+        if (justOk.mode === 'steps') {
+            $('[data-stepid="' + stepCheck + '"] .checkStep').prop('checked', false);
+            $('[data-stepid="' + stepCheck + '"] .stepValue').css('text-decoration', 'none');
             $('.generalModal').remove();
             justOk.mode = 'none';
             justOk.justOk = true;
-        break;
-    }
-
-    });
-
-
-
-    $(document).on('click', '.no', function()
-    {   
-        if(justOk.mode == 'steps')
-        {
-            $('[data-stepid="'+stepCheck+'"] .checkStep').prop( "checked", false);
-            $('[data-stepid="'+stepCheck+'"] .stepValue').css('text-decoration: none;');
-            $('.generalModal').hide();
-            justOk.mode = 'none';
-            justOk.justOk = true;
         }
     });
 
-    $('#parentStats span').click(function(e)
-    {
+    /* ==========================================================================
+       4. Attest / Rework Comment Form (.timeForm)
+       ========================================================================== */
+
+    $('.closeTime').on('click', function (e) {
         e.preventDefault();
-
-        let dir = $(this).data('url');
-             $('#parentStats span').removeClass('active');
-             $('.recycle').removeClass('active');
-             $(this).addClass('active');
-        getOrders(dir);
-    });
-
-    function getOrders(url = dir)
-    {
-
-        if(workflow)
-            url = 'prio';
-
-        $.get('php/functions/getOrders.php', {'dir': url}, function(success){
-
-            
-            if(success == 'empty')
-            {
-                return false;
-            }
-            else
-            {
-              $('[data-url="'+url+'"]').addClass('active');
-              $('.orders').html(success);
-              $('#orderArea').append('<div class="clear"></div>');
-              addToOrder();
-            }
-           });
-
-    }
-
-    $(".recycle").click(function(){
-        $('#parentStats span').removeClass('active');
-        $(this).addClass('active');
-
-        getOrders('canceled');
-    });
-
-    $('#Menu .close').click(function(){
-
-        $("#Menu").hide();
-
-        $(".modal").hide();
-
-    });
-
-
-    $('.openMenu').click(function(){
-
-        $("#Menu").show();
-
-        $(".modal").show();
-
-    });
-
-    
-    $(".addOrder").click(function(){
-    
-        location.href = 'order.php';
-
-    });
-
-
-    $('.closeTime').click(function(e){
-
-        e.preventDefault();
-
         $('.modal').hide();
         $('.modalFocus').hide();
         $('.timeForm').hide();
-        $('.timeForm input[type="number"]').val("");
-        $('.timeForm .textarea').val("");
-
+        $('.timeForm input[name="orderid"]').val('');
+        $('.timeForm input[name="action"]').val('');
+        $('.timeForm textarea[name="comment"]').val('');
     });
 
-    $('.saveTime').click(function(e){
+    $('.saveTime').on('click', function (e) {
+        e.preventDefault();
 
-            e.preventDefault();
+        const $form = $('.timeForm');
+        const targetOrderId = $form.find('.orderid').val();
+        const actionType = $form.find('.action').val();
 
-            tinyMCE.triggerSave();
-            
-            $.post('php/functions/addWorkerTime.php', 
+        $.post('php/functions/addWorkerTime.php', $form.serialize(), function () {
+            if (actionType === 'deny') {
+                message("Uppgiften har skickats för korrigering.", "Kompletteras");
+            } else {
+                message("Uppgiften har godkänts / klarmarkerats.", "Godkänd");
+            }
 
-            $('.timeForm').serialize(), 
+            $('.modal').hide();
+            $('.modalFocus').hide();
+            $form.hide();
+            $form.find('textarea[name="comment"]').val('');
+            $form.find('.action').val('');
+            $form.find('.orderid').val('');
 
-            function(success){
-
-                if(success == "0")
-                {
-                    alert("Tiden är inte giltig...");
-                    return false;
-                }
-                    if($('.timeForm .action').val() == "deny")
-                        message("Uppgiften skickas tillbaka för korrigering");
-                    else
-                    {
-                        var clock = JSON.parse(success);
-                        message(clock['orderTime']);
-                        $('.attestedTime').html(clock['totalTime']);
-                    }
-
-                    $('.modal').hide();
-                    $('.modalFocus').hide();
-                    $('.timeForm').hide();
-                    $('.timeForm input[type="number"]').val("");
-                    $('.timeForm textarea').val("");
-                    $('.timeForm .action').val("");
-                    $('.timeForm .orderid').val("");
-
-                    if(orderFocus)
-                    {
-                        $("[data-orderId='" + id + "']").remove();
-                        orderFocus = false;
-                    }
-                    else
-                        $("[data-orderId='" + id + "']").slideUp();
-
-            });
-
+            if (orderFocus) {
+                $("[data-orderId='" + targetOrderId + "']").remove();
+                orderFocus = false;
+            } else {
+                $("[data-orderId='" + targetOrderId + "']").slideUp(250);
+            }
+        });
     });
 
-
-
-    $(document).on('click', '.done', function(){
-
+    // Mark as done button
+    $(document).on('click', '.done', function () {
+        let orderId = $(this).closest('[data-orderId]').attr('data-orderId');
+        $('.timeForm .modalTitle').text("Meddelande / Kommentar (valfritt)");
+        $('.timeForm .action').val('');
+        $('.timeForm .orderid').val(orderId);
         $('.modal').show();
-        id = $(this).parent().parent().parent().parent().attr("data-orderId");
-
-
         $('.timeForm').show();
-
-        $('.timeForm .orderid').val(id);
     });
 
+    // Deny / Request rework
+    $(document).on('click', '.denyOrder', function () {
+        let orderId = $(this).closest('[data-orderId]').attr('data-orderId');
+        $('.timeForm .modalTitle').text("Vad behöver ändras?");
+        $('.timeForm .action').val('deny');
+        $('.timeForm .orderid').val(orderId);
+        $('.modal').show();
+        $('.timeForm').show();
+    });
 
+    // Accept order (Approver)
+    $(document).on('click', '.acceptOrder', function () {
+        let $card = $(this).closest('[data-orderId]');
+        let orderId = $card.attr('data-orderId');
 
-    $(document).on('click', '.delete', function(){
-        
-        if(orderFocus)
-        {
-            $(this).parent().children('.focusOnOrder').click();
+        if (orderFocus) {
+            $card.find('.focusOnOrder').click();
         }
 
-        id = $(this).parent().parent().parent().parent().attr("data-orderId");
-
-        $(this).parent().parent().parent().parent().slideUp();
-
-
-
-        $.post('php/functions/deleteOrder.php', {postid: id}, function(e){
-
-            message("Flyttade ordern till papperskorgen");
-
+        $card.slideUp(250);
+        $.post('php/functions/acceptOrder.php', { orderId: orderId }, function () {
+            message("Uppgiften blev godkänd!", "Godkänd");
         });
-
     });
 
-    
+    /* ==========================================================================
+       5. Trash & Restore Actions
+       ========================================================================== */
 
-    $(document).on('click', '.change', function(){
+    // Move to Trash
+    $(document).on('click', '.delete', function () {
+        let $card = $(this).closest('[data-orderId]');
+        let orderId = $card.attr('data-orderId');
 
-        id = $(this).parent().parent().parent().parent().attr("data-orderId");
-        $.post('php/functions/changeOrder.php', {orderId: id}, function(message)
-        {
+        if (orderFocus) {
+            $card.find('.focusOnOrder').click();
+        }
+
+        $card.slideUp(250);
+        $.post('php/functions/deleteOrder.php', { postid: orderId }, function () {
+            message("Uppdraget har flyttats till papperskorgen.", "Papperskorg");
+        });
+    });
+
+    // Restore from Trash
+    $(document).on('click', '.Restore', function () {
+        let $card = $(this).closest('[data-orderId]');
+        let orderId = $card.attr('data-orderId');
+
+        $.post('php/functions/restoreOrder.php', { id: orderId }, function () {
+            message("Uppdraget har återställts.", "Återställd");
+            loadSection('canceled', false);
+        });
+    });
+
+    // Change order redirect
+    $(document).on('click', '.change', function () {
+        let orderId = $(this).closest('[data-orderId]').attr('data-orderId');
+        $.post('php/functions/changeOrder.php', { orderId: orderId }, function () {
             location.href = 'changeorder.php';
         });
     });
 
+    /* ==========================================================================
+       6. Steps, Images & Expand Details
+       ========================================================================== */
 
-    
-    $(document).on('click', '.Restore', function(){
-         
-        var id = $(this).parent().parent().attr("data-orderId");
-
-        $.post('php/functions/restoreOrder.php', {'id': id});
-
-        getOrders();
-        $('.recycle').removeClass('active');
-    });
-
-    $(document).on('click', '.denyOrder', function(){
-         
-        $('.modal').show();
-        id = $(this).parent().parent().parent().parent().attr("data-orderId");
-        $('.timeForm .orderid').val(id);
-        $('.timeForm .action').val("deny");
-
-        $('.timeForm h5').remove();
-        $('.timeForm').prepend("<h5>Vad behöver ändras?</h5>");
-        $('.timeForm .fields').remove();
-        $('.timeForm input[type="number"').remove();
-        $('.timeForm').show();
-
-    });
-
-    $(document).on('click', '.acceptOrder', function()
-    {
-            
-        if(orderFocus)
-        {
-            $(this).parent().children('.focusOnOrder').click();
-        }
-
-            var id = $(this).parent().parent().parent().parent().attr("data-orderId");
-
-            $(this).parent().parent().parent().parent().slideUp();
-
-
-
-            $.post('php/functions/acceptOrder.php', {orderId: id}, function(e){
-
-                message("Uppgiften blev godkänd!");
-
-            });
-
-    });
-
-
-
-    function addToOrder()
-    {
-
-        $('.order').each(function(){
-
+    function addToOrder() {
+        $('.order').each(function () {
             let id = $(this).data('orderid');
-            $.get('php/functions/getSteps.php', {orderId: id}, function (success) {
-                $('[data-steps="'+id+'"]').append(success);
-              });
-        })
+            let $stepsContainer = $('[data-steps="' + id + '"]');
+            if ($stepsContainer.length && !$stepsContainer.children().length) {
+                $.get('php/functions/getSteps.php', { orderId: id }, function (success) {
+                    $stepsContainer.html(success);
+                });
+            }
+        });
     }
 
-    $(document).on('click', '.openGallery', function(){
-
-        var id = $(this).data('path');
-        $.get('php/functions/getImages.php', {'orderid': id}, function(success){
-            $('body').prepend('<div class="generalModal galleryModal"><div class="imageHolder"></div></div>');
-             $('.generalModal').prepend("<div class='close'><button class='closeGallery'>X</button></div>");
-            $('.imageHolder').html(success);
+    // Image Gallery Modal
+    $(document).on('click', '.openGallery', function () {
+        let id = $(this).data('path');
+        $.get('php/functions/getImages.php', { 'orderid': id }, function (success) {
+            $('body').prepend(`
+                <div class="generalModal galleryModal">
+                    <div class="close"><button class="closeGallery">✕</button></div>
+                    <div class="imageHolder">${success}</div>
+                </div>
+            `);
             $('.generalModal').show();
         });
     });
 
-    $(document).on('click', '.closeGallery', function()
-    {
-        $('.generalModal').remove();
+    $(document).on('click', '.closeGallery', function () {
+        $('.generalModal.galleryModal').remove();
     });
 
-    $(document).on('click', '.checkStep', function(){
+    // Expand / Collapse Order Description
+    $(document).on('click', '.readMore', function () {
+        let orderId = $(this).data('orderid');
+        let $desc = $('[data-orderid="' + orderId + '"] .desc');
 
-        stepCheck = $(this).parent().parent().attr('data-stepid');
-        orderId = $(this).parent().parent().parent().attr('data-steps');
-        justOk.mode = 'steps';
-        justOk.justOk = false;
-        pageAlert("Markera ordern", "Vill du markera steget som färdigt? beställaren kommer att mailas.", true);
-
-    });
-
-
-
-    $(document).on('click', '.readMore', function(){
-        var orderid = $(this).data('orderid');
-        
-        var order = $('[data-orderid="'+orderid+'"] .desc');
-        
-        if(!order.hasClass('autoHeight'))
-        {
-            order.addClass('autoHeight');
-            order.removeClass('masked');
+        if (!$desc.hasClass('autoHeight')) {
+            $desc.addClass('autoHeight').removeClass('masked');
             $(this).addClass('rotate');
-        }
-        else
-        {
-            order.removeClass('autoHeight');
-            order.addClass('masked');
+        } else {
+            $desc.removeClass('autoHeight').addClass('masked');
             $(this).removeClass('rotate');
         }
-
-        var height = $('[data-orderid="'+orderid+'"] .desc').css('height');
-        
     });
 
+    /* ==========================================================================
+       7. Focus Mode
+       ========================================================================== */
 
+    $(document).on('click', '.focusOnOrder', function () {
+        let $card = $(this).closest('[data-orderid]');
+        let targetId = $card.attr('data-orderid');
+        let dir = $(this).attr('data-dir');
 
-
-    $(document).on('click', '.focusOnOrder', function()
-    {
-         orderId =  $(this).parent().parent().parent().parent().attr('data-orderid');
-         let dir =  $(this).attr('data-dir');
-
-         if(!orderFocus)
-         {
-             $('.modalFocus').show();
-             $(this).parent().parent().parent().parent().addClass('orderFocus');
-           
-             $('[data-orderid="'+orderId+'"] .showText').click();
-             $.post('php/functions/focusOrder.php', {'orderId': orderId, 'dir': dir});
-
-             orderFocus = true;
-         }
-         else
-         {
-             $('.modalFocus').hide();
-             $(this).parent().parent().parent().parent().removeClass('orderFocus');
-             $('[data-orderid="'+orderId+'"] .showText').click();
-             $.post('php/functions/focusOrder.php', {'orderId': orderId});
-             orderFocus = false
-         
-         }
-    });
-   
-
-    $('.modalFocus').click(function()
-    {
-
-            $.post('php/functions/focusOrder.php', {'orderId': 'none'});
-            $('[data-orderid="'+orderId+'"]').removeClass('orderFocus');
-            $('[data-orderid="'+orderId+'"] .showText').click();
+        if (!orderFocus) {
+            $('.modalFocus').show();
+            $card.addClass('orderFocus');
+            $card.find('.showText').click();
+            $.post('php/functions/focusOrder.php', { 'orderId': targetId, 'dir': dir });
+            orderFocus = true;
+            focusedOrderId = targetId;
+        } else {
+            $('.modalFocus').hide();
+            $card.removeClass('orderFocus');
+            $card.find('.showText').click();
+            $.post('php/functions/focusOrder.php', { 'orderId': targetId });
             orderFocus = false;
-            $(this).hide();
-
+        }
     });
 
+    $('.modalFocus').on('click', function () {
+        $.post('php/functions/focusOrder.php', { 'orderId': 'none' });
+        $('[data-orderid="' + focusedOrderId + '"]').removeClass('orderFocus');
+        $('[data-orderid="' + focusedOrderId + '"] .showText').click();
+        orderFocus = false;
+        $(this).hide();
+    });
 
-    $(".searchOrder").on('input', function(event) {
+    /* ==========================================================================
+       8. Spotlight Search Integration
+       ========================================================================== */
 
-           let string = $(this).val();
+    let searchDebounceTimer = null;
+    $(".searchOrder").on('input', function () {
+        clearTimeout(searchDebounceTimer);
+        let query = $(this).val().trim();
 
-           if(string == '')
-           {
-                console.log('empty');
-                $('.results').html('');
-                getOrders();
-                return;
-           }
-  
-            $.post('php/functions/searchOrders.php', {'string': string}, function(success)
-            {
-                if(success == "empty")
-                {
+        if (query === '') {
+            $('.results').html('');
+            loadSection(currentDir, false);
+            return;
+        }
+
+        searchDebounceTimer = setTimeout(function () {
+            $.post('php/functions/searchOrders.php', { 'string': query }, function (success) {
+                let trimmed = (success || '').trim();
+                if (trimmed === 'empty' || trimmed === '' || trimmed === '0') {
                     $('.results').html('0 resultat');
-                    getOrders();
-                    return false;
-                }
-                else
-                {
-                    $('.orders').html(success);
-                    $('.orders').children().length;
-                    $('.results').html($('.orders').children().length + ' resultat');
+                    $('.orders').html(`
+                        <div class="ordersEmptyState">
+                            <div class="emptyIcon">🔍</div>
+                            <h3>Inga träffar</h3>
+                            <p>Inga uppgifter matchade "${$('<div>').text(query).html()}".</p>
+                        </div>
+                    `);
+                } else {
+                    $('.orders').html(trimmed);
+                    let count = $('.orders').children('.order').length;
+                    $('.results').html(count + ' resultat');
+                    addToOrder();
                 }
             });
-         
+        }, 220);
     });
 
-    getOrders();
-
-
 });
-

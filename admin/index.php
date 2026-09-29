@@ -1,9 +1,24 @@
 <?php
+    define('login_req', true);
     require '../global.php';
 
-     // Get working time
-   $timeWorked_attest = $main->MyWorkingTime($_SESSION['user']['userid']); 
-   $timeWorked_paid = $main->MyWorkingTime($_SESSION['user']['userid'], true); 
+    // Säkerställ att admin alltid har avslutande snedstreck så att relativa länkar inte hoppar ur mappen
+    $requestUriPath = explode('?', $_SERVER['REQUEST_URI'])[0];
+    if (!str_ends_with($requestUriPath, '/') && !str_ends_with($requestUriPath, '.php')) {
+        header('Location: ' . $requestUriPath . '/' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '' ? '?' . $_SERVER['QUERY_STRING'] : ''));
+        exit;
+    }
+
+    if (!isset($_SESSION['user'])) {
+        header('location: ../index.php');
+        exit;
+    }
+
+    if (!$auth->hasRight('admin')) {
+        header('location: ../home.php');
+        exit;
+    }
+
 ?>
 
 <!DOCTYPE html>
@@ -30,7 +45,7 @@
                     <img class="pic" src="../ui/style/images/profilepics/girl.jpg">
                 </div>
                 
-                <a href="../home">
+                <a href="../home.php">
                 <div class="pm">
                     <div class="pmIcon"></div>
                     <span>Hem</span>
@@ -42,15 +57,7 @@
                
             </div>
 
-            <div data-pagename="time" class="menuButton">Arbetstider</div> 
-            <div data-pagename="pay" class="menuButton">Betalningar</div> 
-            <div data-pagename="users" class="menuButton">Användare</div>
-           <!-- <div data-pagename="settings" class="menuButton">Inställningar</div> -->
-
-            <div class="timeWorked">
-        <span><h1><?php echo $timeWorked_paid['hours'] . 'h ' . $timeWorked_paid['minutes'] . 'm'; ?></h1><p>Betald tid</p></span>
-         <span><h1 class="attestedTime"><?php echo $timeWorked_attest['hours'] . 'h ' . $timeWorked_attest['minutes'] . 'm'; ?></h1><p>Attesterad tid</p></span>
-        </div>
+            <div data-pagename="users" class="menuButton active">Användare</div>
 
             
       

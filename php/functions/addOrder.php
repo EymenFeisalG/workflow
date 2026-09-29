@@ -1,51 +1,17 @@
 <?php
 
-
-
+define('login_req', true);
 require '../../global.php';
 
+header('Content-Type: application/json; charset=utf-8');
 
+if (!isset($_SESSION['user']['userid'])) {
+    echo json_encode(['success' => false, 'error' => 'Du måste vara inloggad för att skapa en order.']);
+    exit;
+}
 
+$images = isset($_FILES['images']) ? $_FILES['images'] : (isset($_FILES['image']) ? $_FILES['image'] : null);
 
+$result = $main->createOrderUnified($_POST, $images);
 
-
-
-$orderId = $main->sendOrder(
-
-       
-    $_POST['company_name'],
-    
-    $_SESSION['user']['userid'],
-
-    $_POST['org'],
-
-    $_POST['contact'],
-
-    $_POST['company_domain'],
-
-    $_POST['order_desc'],
-
-    $_POST['worker'],
-
-    $_POST['company_admin_username'],
-
-    $_POST['company_admin_password'],
-
-    $_POST['asap'],
-
-    $_POST['devMessage'],
-
-    $_POST['path'],
-
-    $_POST['saveCustomer']
-    
-);
-
-
-
-
-
-echo $orderId;
-
-
-
+echo json_encode($result);

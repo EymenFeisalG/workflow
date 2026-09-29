@@ -15,3 +15,4 @@ if(isset($_SESSION['changeOrder']))
 
 
 header('location: ../../home.php');
+exit;
