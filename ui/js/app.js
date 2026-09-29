@@ -13,13 +13,26 @@ $(document).ready(function () {
     let currentDir = (typeof Direction !== 'undefined' && Direction) ? Direction : 'ongoing';
     let stepCheck = 0;
     let justOk = { mode: 'none', justOk: true };
-    let orderFocus = (typeof orderInFocus !== 'undefined' && orderInFocus === 'true');
-    let focusedOrderId = $('#focusOrder').text().trim();
+    let focusedOrderId = null;
+    let temporaryView = false;
     let workflowSortable = null;
     let isSectionLoading = false;
 
+    // Mirror the status counts from the desktop tabs into the mobile submenu.
+    ['pending', 'rework', 'completed'].forEach(function (dir) {
+        const count = $('#parentStats [data-url="' + dir + '"] .dockBadge').text().trim() || '0';
+        $('#dockSubmenuPopover .dockMenuCategory[data-url="' + dir + '"] .dockMobileCategoryCount')
+            .text(count)
+            .attr('aria-label', count + ' uppdrag');
+    });
+
     // Initialize initial section from URL parameter or default
     initCurrentSection();
+    restoreFocus();
+    if ($('#notificationBell').length) {
+        refreshNotifications();
+        window.setInterval(refreshNotifications, 30000);
+    }
 
     /* ==========================================================================
        1. Dynamic AJAX Section Loading Engine
@@ -66,7 +79,9 @@ $(document).ready(function () {
             } else if (requestDir === 'canceled') {
                 $targetBtn = $('.dockSubmenuItem.recycle');
             } else {
-                $targetBtn = $('#parentStats [data-url="' + requestDir + '"]').closest('.dockTextTab');
+                const $menuCategory = $('#dockSubmenuPopover .dockMenuCategory[data-url="' + requestDir + '"]');
+                const $directCategory = $('#parentStats [data-url="' + requestDir + '"]').closest('.dockTextTab');
+                $targetBtn = $menuCategory.is(':visible') ? $menuCategory : $directCategory;
             }
         }
 
@@ -95,7 +110,7 @@ $(document).ready(function () {
                 $('.dockTabText').removeClass('dockTextLoading');
 
                 // Update active states across dock navigation
-                $('#parentStats .dockTextTab').removeClass('active');
+                $('#parentStats .dockTextTab, .dockMenuCategory').removeClass('active');
                 $('#dockWorkflowBtn').removeClass('active');
                 $('.recycle').removeClass('active');
                 $('#dockMoreTrigger').removeClass('active');
@@ -106,7 +121,10 @@ $(document).ready(function () {
                     $('.recycle').addClass('active');
                     $('#dockMoreTrigger').addClass('active');
                 } else {
+                    const $menuCategory = $('#dockSubmenuPopover .dockMenuCategory[data-url="' + requestDir + '"]');
                     $('#parentStats [data-url="' + requestDir + '"]').addClass('active');
+                    $menuCategory.addClass('active');
+                    if ($menuCategory.length) $('#dockMoreTrigger').addClass('active');
                 }
 
                 // Close dock submenu if open
@@ -235,6 +253,13 @@ $(document).ready(function () {
         loadSection(dir, true, $tab);
     });
 
+    // Compact mobile status categories inside the More submenu
+    $(document).on('click', '#dockSubmenuPopover .dockMenuCategory', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        loadSection($(this).data('url'), true, $(this));
+    });
+
     // Workflow Button
     $(document).on('click', '#dockWorkflowBtn', function (e) {
         e.preventDefault();
@@ -314,7 +339,6 @@ $(document).ready(function () {
     $('.closeTime').on('click', function (e) {
         e.preventDefault();
         $('.modal').hide();
-        $('.modalFocus').hide();
         $('.timeForm').hide();
         $('.timeForm input[name="orderid"]').val('');
         $('.timeForm input[name="action"]').val('');
@@ -336,15 +360,14 @@ $(document).ready(function () {
             }
 
             $('.modal').hide();
-            $('.modalFocus').hide();
             $form.hide();
             $form.find('textarea[name="comment"]').val('');
             $form.find('.action').val('');
             $form.find('.orderid').val('');
 
-            if (orderFocus) {
+            if (focusedOrderId === String(targetOrderId)) {
+                closeFocus();
                 $("[data-orderId='" + targetOrderId + "']").remove();
-                orderFocus = false;
             } else {
                 $("[data-orderId='" + targetOrderId + "']").slideUp(250);
             }
@@ -376,9 +399,7 @@ $(document).ready(function () {
         let $card = $(this).closest('[data-orderId]');
         let orderId = $card.attr('data-orderId');
 
-        if (orderFocus) {
-            $card.find('.focusOnOrder').click();
-        }
+        if (focusedOrderId === String(orderId)) closeFocus();
 
         $card.slideUp(250);
         $.post('php/functions/acceptOrder.php', { orderId: orderId }, function () {
@@ -395,9 +416,7 @@ $(document).ready(function () {
         let $card = $(this).closest('[data-orderId]');
         let orderId = $card.attr('data-orderId');
 
-        if (orderFocus) {
-            $card.find('.focusOnOrder').click();
-        }
+        if (focusedOrderId === String(orderId)) closeFocus();
 
         $card.slideUp(250);
         $.post('php/functions/deleteOrder.php', { postid: orderId }, function () {
@@ -431,7 +450,7 @@ $(document).ready(function () {
     function addToOrder() {
         $('.order').each(function () {
             let id = $(this).data('orderid');
-            let $stepsContainer = $('[data-steps="' + id + '"]');
+            let $stepsContainer = $(this).find('[data-steps="' + id + '"]');
             if ($stepsContainer.length && !$stepsContainer.children().length) {
                 $.get('php/functions/getSteps.php', { orderId: id }, function (success) {
                     $stepsContainer.html(success);
@@ -476,33 +495,125 @@ $(document).ready(function () {
        7. Focus Mode
        ========================================================================== */
 
-    $(document).on('click', '.focusOnOrder', function () {
-        let $card = $(this).closest('[data-orderid]');
-        let targetId = $card.attr('data-orderid');
-        let dir = $(this).attr('data-dir');
+    function showFocus(order) {
+        if (!order || !$('#focusOverlay').length) return;
+        $.get('php/functions/getOrders.php', { dir: 'focus', orderId: order.id }, function (html) {
+            if (!html || html.trim() === 'empty') { closeFocus(); return; }
+            focusedOrderId = String(order.id);
+            temporaryView = false;
+            $('#focusTitle').text('Fokus: ' + order.title);
+            $('#focusContent').html(html);
+            $('#focusOverlay').prop('hidden', false);
+            $('body').addClass('focusOpen');
+            addToOrder();
+        }).fail(function () { message('Kunde inte öppna uppgiften.', 'Fokusläge'); });
+    }
 
-        if (!orderFocus) {
-            $('.modalFocus').show();
-            $card.addClass('orderFocus');
-            $card.find('.showText').click();
-            $.post('php/functions/focusOrder.php', { 'orderId': targetId, 'dir': dir });
-            orderFocus = true;
-            focusedOrderId = targetId;
-        } else {
-            $('.modalFocus').hide();
-            $card.removeClass('orderFocus');
-            $card.find('.showText').click();
-            $.post('php/functions/focusOrder.php', { 'orderId': targetId });
-            orderFocus = false;
+    function restoreFocus() {
+        if (!$('#focusOverlay').length) return;
+        $.getJSON('php/functions/focusOrder.php', function (result) {
+            if (result.order) showFocus(result.order);
+        });
+    }
+
+    function showReadOnly(orderId) {
+        $.get('php/functions/getOrders.php', { dir: 'single', orderId: orderId }, function (html) {
+            if (!html || html.trim() === 'empty') { message('Uppgiften är inte längre tillgänglig.', 'Notifikationer'); return; }
+            temporaryView = true;
+            $('#focusContent').html(html);
+            $('#focusTitle').text('Uppgift #' + orderId);
+            $('#focusOverlay').prop('hidden', false);
+            $('body').addClass('focusOpen');
+            addToOrder();
+        });
+    }
+
+    function setFocus(orderId, allowReadOnly = false) {
+        $.post('php/functions/focusOrder.php', { action: 'set', orderId: orderId, csrf: WorkflowCsrf }, function (result) {
+            showFocus(result.order);
+        }, 'json').fail(function () {
+            if (allowReadOnly) showReadOnly(orderId);
+            else message('Uppgiften kan inte öppnas i fokusläge.', 'Fokusläge');
+        });
+    }
+
+    function closeFocus() {
+        if (temporaryView) {
+            temporaryView = false;
+            $('#focusOverlay').prop('hidden', true);
+            $('#focusContent').empty();
+            $('body').removeClass('focusOpen');
+            restoreFocus();
+            return;
         }
-    });
+        focusedOrderId = null;
+        $('#focusOverlay').prop('hidden', true);
+        $('#focusContent').empty();
+        $('body').removeClass('focusOpen');
+        $.post('php/functions/focusOrder.php', { action: 'clear', csrf: WorkflowCsrf });
+    }
 
-    $('.modalFocus').on('click', function () {
-        $.post('php/functions/focusOrder.php', { 'orderId': 'none' });
-        $('[data-orderid="' + focusedOrderId + '"]').removeClass('orderFocus');
-        $('[data-orderid="' + focusedOrderId + '"] .showText').click();
-        orderFocus = false;
-        $(this).hide();
+    $(document).on('click', '.focusOnOrder', function () {
+        const id = String($(this).closest('[data-orderid]').attr('data-orderid'));
+        if (id === focusedOrderId) closeFocus(); else setFocus(id);
+    });
+    $('#focusClose').on('click', closeFocus);
+    $('#focusOverlay').on('click', function (event) { if (event.target === this) closeFocus(); });
+
+    function escapeNotification(value) { return $('<span>').text(value == null ? '' : String(value)).html(); }
+    const notificationLabels = {
+        assigned: 'tilldelade eller omfördelade uppgiften', unassigned: 'tog bort din tilldelning', updated: 'ändrade uppgiften',
+        step_completed: 'slutförde ett steg', pending: 'skickade uppgiften för granskning',
+        rework: 'begärde komplettering', completed: 'godkände uppgiften',
+        canceled: 'flyttade uppgiften till papperskorgen', restored: 'återställde uppgiften'
+    };
+
+    function refreshNotifications() {
+        $.getJSON('php/functions/notifications.php', function (result) {
+            const count = Number(result.unread || 0);
+            $('#notificationCount').text(count > 99 ? '99+' : count).prop('hidden', count === 0);
+            $('#notificationBell').attr('aria-label', 'Notifikationer, ' + count + ' olästa');
+            const groups = new Map();
+            (result.items || []).forEach(function (item) {
+                const key = String(item.order_id);
+                if (!groups.has(key)) groups.set(key, { latest: item, ids: [], unread: false });
+                const group = groups.get(key);
+                group.ids.push(Number(item.id));
+                if (!item.read_at) group.unread = true;
+            });
+            if (!groups.size) { $('#notificationList').html('<p class="notificationEmpty">Inga notifikationer ännu.</p>'); return; }
+            const markup = Array.from(groups.values()).map(function (group) {
+                const item = group.latest;
+                const action = notificationLabels[item.event_type] || 'uppdaterade uppgiften';
+                const date = new Date(String(item.created_at).replace(' ', 'T'));
+                const time = Number.isNaN(date.getTime()) ? '' : date.toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' });
+                const extra = group.ids.length > 1 ? '<span class="notificationGrouped">' + group.ids.length + ' händelser</span>' : '';
+                return '<button type="button" class="notificationItem' + (group.unread ? ' unread' : '') + '" data-order-id="' + Number(item.order_id) + '" data-notification-ids="' + group.ids.join(',') + '">' +
+                    '<span class="notificationDot"></span><span class="notificationBody"><strong>' + escapeNotification(item.order_title) + '</strong>' +
+                    '<span>' + escapeNotification(item.actor_name) + ' ' + escapeNotification(action) + '</span>' +
+                    (item.detail ? '<small>' + escapeNotification(item.detail) + '</small>' : '') +
+                    '<small>' + escapeNotification(time) + extra + '</small></span></button>';
+            }).join('');
+            $('#notificationList').html(markup);
+        });
+    }
+
+    $('#notificationBell').on('click', function () {
+        const opening = $('#notificationPopover').prop('hidden');
+        $('#notificationPopover').prop('hidden', !opening);
+        $(this).attr('aria-expanded', opening ? 'true' : 'false');
+        if (opening) refreshNotifications();
+    });
+    $('#notificationReadAll').on('click', function () {
+        $.post('php/functions/notifications.php', { all: '1', csrf: WorkflowCsrf }, refreshNotifications);
+    });
+    $(document).on('click', '.notificationItem', function () {
+        const ids = String($(this).attr('data-notification-ids')).split(',');
+        const orderId = Number($(this).attr('data-order-id'));
+        $.post('php/functions/notifications.php', { ids: ids, csrf: WorkflowCsrf }, refreshNotifications);
+        $('#notificationPopover').prop('hidden', true);
+        $('#notificationBell').attr('aria-expanded', 'false');
+        setFocus(orderId, true);
     });
 
     /* ==========================================================================

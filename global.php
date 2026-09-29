@@ -5,6 +5,7 @@ use Mailer\Mailer;
 
 
 session_start();
+if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 // page settings
 require 'settings.php';
 // PHP mailer init
@@ -17,11 +18,13 @@ require 'php/classes/database.class.php';
 require 'php/classes/mailer.class.php';
 require 'php/classes/main.class.php';   
 require 'php/classes/auth.class.php';
+require 'php/classes/taskNotifications.class.php';
 
 
 $db = new database($mysql_settings);
 $main = new main($email_settings);
 $auth = new auth($email_settings);
+$taskNotifications = new TaskNotifications(database::$mysql);
 
 if($auth->Maintenance())
 {
