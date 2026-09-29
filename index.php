@@ -1,6 +1,5 @@
 <?php
 
-   
 
    define('login_req', false);
 
@@ -14,15 +13,13 @@
 
 
 
-
-
 ?>
 
 
 
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="sv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,28 +28,34 @@
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
     <script src="ui/js/login.js"></script>
-    <title>WorkGUI: Loga in</title>
+    <title>WorkGUI: Logga in</title>
     <link rel="icon" type="image/x-icon" href="ui/style/images/icons/W.ico">
 </head>
 <body>
 
-    <div class="loginHolder">
-        <div class="loginForm">
-        <img style="display: none; width: 100%; height: 600px;" class="buklao" src="ui/style/images/buklao.png">
-            
-        <form method="post">
-                <h5>Användarnamn / Email</h5>
-                <input type="text" name="username">
-                <h5>Lösenord</h5>
-                <input type="password" name="password">
-                <br>
-                <div class="forgotPassword"><a href="register.php">Registrera konto</a></div>
+    <main class="loginHolder">
+        <section class="loginForm" aria-labelledby="login-title">
+            <div class="brandMark" aria-hidden="true">W</div>
+            <p class="eyebrow">WorkGUI</p>
+            <h1 id="login-title">Välkommen tillbaka</h1>
+            <p class="loginIntro">Logga in för att fortsätta till ditt arbetsflöde.</p>
+
+            <form method="post">
+                <div class="fieldGroup">
+                    <label for="username">Användarnamn eller e-post</label>
+                    <input id="username" type="text" name="username" autocomplete="username" required>
+                </div>
+                <div class="fieldGroup">
+                    <label for="password">Lösenord</label>
+                    <input id="password" type="password" name="password" autocomplete="current-password" required>
+                </div>
                 <div class="buttons">
                     <input type="submit" class="login" value="Logga in" name="login">
                 </div>
+                <div class="forgotPassword"><a href="register.php">Skapa ett konto</a></div>
             </form>
-        </div>
-    </div>
+        </section>
+    </main>
 
 </body>
 </html>
