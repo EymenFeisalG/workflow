@@ -223,7 +223,7 @@ class auth extends database
                 try {
                     self::query("INSERT INTO users (username, password, email, user_role, hourSalary) VALUES ('".$data['username']."', '".$password."', '".$data['email']."', '".$role."', '0')");
                     $newUserId = (int)self::$mysql->insert_id;
-                    $defaultRights = ($role === '2') ? ['admin', 'all'] : ['add_new_order'];
+                    $defaultRights = ($role === '2') ? ['admin', 'all', 'maintenanceLogin'] : ['add_new_order'];
                     foreach ($defaultRights as $right) {
                         self::query("INSERT INTO privileges (userid, privilege) VALUES ($newUserId, '".self::escape($right)."')");
                     }
