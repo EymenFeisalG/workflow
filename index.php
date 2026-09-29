@@ -28,7 +28,7 @@
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
     <script src="ui/js/login.js"></script>
-    <title>WorkGUI: Logga in</title>
+    <title>WorkGUI: Log in</title>
     <link rel="icon" type="image/x-icon" href="ui/style/images/icons/W.ico">
 </head>
 <body>
