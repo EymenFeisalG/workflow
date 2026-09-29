@@ -1559,36 +1559,46 @@
 }
 
 @media (max-width: 700px) {
-    .createdHistoryCard {
-        bottom: calc(7.6rem + env(safe-area-inset-bottom, 0px));
-        max-height: calc(100dvh - 8.5rem - env(safe-area-inset-bottom, 0px));
-    }
-}
-
-@media (max-width: 480px) {
-    .historyTabTrigger {
-        display: flex;
-        flex: 0 1 auto;
-        min-width: 0;
-        max-width: calc(100vw - 4rem);
-        justify-content: flex-start;
-        gap: 0.2rem;
-        padding: 0.35rem 0.4rem;
-        font-size: 0.6rem;
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-
-    .historyTabTrigger::-webkit-scrollbar {
-        display: none;
+    .historyQuickBar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 2.75rem;
+        width: 100%;
+        max-width: none;
+        padding: 0 0.5rem;
+        box-sizing: border-box;
     }
 
     .historyQuickBar::before {
         display: none;
     }
 
+    .historyTabTrigger {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .createdHistoryCard {
+        bottom: calc(7.75rem + env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - 8.75rem - env(safe-area-inset-bottom, 0px));
+    }
+}
+
+@media (max-width: 560px) {
+    .historyTabTrigger {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.2rem 0.5rem;
+        padding: 0.35rem 0.65rem;
+    }
+
     .historyQuickBar .notificationBell {
         box-sizing: border-box;
+    }
+
+    .historySummaryItem {
+        min-width: 0;
+        justify-content: space-between;
     }
 
     .historySummaryItem + .historySummaryItem {
@@ -1613,14 +1623,8 @@
     }
 
     .createdHistoryCard {
-        bottom: calc(7.6rem + env(safe-area-inset-bottom, 0px));
-        max-height: calc(100dvh - 8.5rem - env(safe-area-inset-bottom, 0px));
-    }
-}
-
-@media (max-width: 360px) {
-    .historyQuickBar::before {
-        display: none;
+        bottom: calc(8rem + env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - 9rem - env(safe-area-inset-bottom, 0px));
     }
 }
 

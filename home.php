@@ -31,9 +31,9 @@
         var TeamWorkers = <?php echo json_encode($main->getWorkersList(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
     </script>
     <link href="ui/style/css/general.css" rel="stylesheet">
-    <link href="ui/style/css/orderModal.css?v=3.8" rel="stylesheet">
-    <link href="ui/style/css/macDock.css?v=3.6" rel="stylesheet">
-    <link href="ui/style/css/notificationsFocus.css?v=5" rel="stylesheet">
+    <link href="ui/style/css/orderModal.css?v=3.9" rel="stylesheet">
+    <link href="ui/style/css/macDock.css?v=3.7" rel="stylesheet">
+    <link href="ui/style/css/notificationsFocus.css?v=6" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
     <script src="ui/js/orderModal.js?v=2.21"></script>
