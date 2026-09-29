@@ -1,6 +1,9 @@
 Options -Indexes
 DirectoryIndex index.php index.html
 AddType application/x-httpd-php84 .php
+php_flag display_errors Off
+php_flag log_errors On
+ErrorDocument 500 /server-error.html
 
 <FilesMatch "^(\.env(?:\..*)?|\.workflow-ftp-deploy-state\.json|\.gitignore|web\.config|README\.md)$">
     Require all denied
