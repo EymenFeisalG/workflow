@@ -55,8 +55,42 @@ jobs:
             fi
           done
 
-      - name: Install MySQL support for PHP CLI
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq php8.3-cli php8.3-mysql
+      - name: Install MySQL support for PHP CLI and backup
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq php8.3-cli php8.3-mysql default-mysql-client
+
+      - name: Encrypt a backup of the production database
+        env:
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_USER: ${{ vars.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+        run: |
+          set -euo pipefail
+          export MYSQL_PWD="$DB_PASS"
+          mysqldump --host="$DB_HOST" --user="$DB_USER" --port=3306 --lock-tables --hex-blob \
+            --result-file="$RUNNER_TEMP/workflow-before-deploy.sql" xlfood_se_db_workflow
+          unset MYSQL_PWD
+          test -s "$RUNNER_TEMP/workflow-before-deploy.sql"
+          openssl rand -hex 32 > "$RUNNER_TEMP/backup-passphrase"
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+            -pass file:"$RUNNER_TEMP/backup-passphrase" \
+            -in "$RUNNER_TEMP/workflow-before-deploy.sql" \
+            -out "$RUNNER_TEMP/workflow-before-deploy.sql.enc"
+          openssl pkeyutl -encrypt -pubin -inkey .github/production-backup-public.pem \
+            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 \
+            -in "$RUNNER_TEMP/backup-passphrase" -out "$RUNNER_TEMP/backup-passphrase.enc"
+          rm "$RUNNER_TEMP/workflow-before-deploy.sql" "$RUNNER_TEMP/backup-passphrase"
+          test -s "$RUNNER_TEMP/workflow-before-deploy.sql.enc"
+          test -s "$RUNNER_TEMP/backup-passphrase.enc"
+
+      - name: Save encrypted production backup
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: workflow-production-before-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/workflow-before-deploy.sql.enc
+            ${{ runner.temp }}/backup-passphrase.enc
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Apply pending production database migrations
         env:
