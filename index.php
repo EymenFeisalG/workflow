@@ -44,6 +44,10 @@
                     <label for="password">Lösenord</label>
                     <input id="password" type="password" name="password" autocomplete="current-password" required>
                 </div>
+                <label class="rememberOption" for="remember">
+                    <input id="remember" type="checkbox" name="remember" value="1">
+                    <span>Kom ihåg mig på den här enheten</span>
+                </label>
                 <div class="buttons">
                     <input type="submit" class="login" value="Logga in" name="login">
                 </div>

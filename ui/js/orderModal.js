@@ -20,6 +20,8 @@
     let removedImageIds = [];
     let searchDebounceTimer = null;
     let draftSaveTimer = null;
+    let historyRequestPending = false;
+    let lastHistorySnapshot = null;
 
     window.openOrderModal = function () {
         if (editingOrderId !== null) {
@@ -786,8 +788,13 @@
     // Delegeringshistorik (Kort på sidan)
     // ==========================================
     window.loadCreatedOrdersHistory = function () {
-        $.getJSON('php/functions/getMyCreatedOrders.php', function (res) {
+        if (historyRequestPending) return;
+        historyRequestPending = true;
+        $.getJSON('php/functions/getMyCreatedOrders.php').done(function (res) {
             if (!res || !res.success) return;
+            const snapshot = JSON.stringify([res.stats, res.orders]);
+            if (snapshot === lastHistorySnapshot) return;
+            lastHistorySnapshot = snapshot;
 
             const stats = res.stats || {};
             const orders = res.orders || [];
@@ -858,7 +865,7 @@
 
                 $list.append($item);
             });
-        });
+        }).always(function () { historyRequestPending = false; });
     };
 
     function initHistoryCard() {

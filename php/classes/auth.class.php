@@ -3,6 +3,8 @@ use Mailer\Mailer;
 
 class auth extends database
 {
+    private const REMEMBER_COOKIE = 'workflow_remember';
+    private const REMEMBER_LIFETIME = 400 * 24 * 60 * 60;
     public $mailServer;
 
     public function __construct($email_settings = [])
@@ -116,9 +118,8 @@ class auth extends database
     {
         if(isset($_COOKIE['user']))
         {
-            $userinfo = unserialize($_COOKIE['user']);
-
-            $_SESSION['user'] = $userinfo;
+            // The old serialized user cookie was not authenticated and must never be trusted.
+            self::clearCookie('user');
         }
 
         if(!defined('login_req'))
@@ -159,7 +160,91 @@ class auth extends database
         }
     }
 
-    public function login($username, $password, $isAjax = true)
+    private static function cookieOptions(int $expires): array
+    {
+        return [
+            'expires' => $expires,
+            'path' => '/',
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+    }
+
+    private static function clearCookie(string $name): void
+    {
+        setcookie($name, '', self::cookieOptions(time() - 3600));
+        unset($_COOKIE[$name]);
+    }
+
+    private static function userFromRow(array $row): array
+    {
+        return [
+            'username' => $row['username'],
+            'email' => $row['email'],
+            'rank' => $row['user_role'],
+            'userid' => $row['id'],
+        ];
+    }
+
+    public function restoreRememberedLogin(): void
+    {
+        if (isset($_SESSION['user'])) return;
+
+        $cookie = $_COOKIE[self::REMEMBER_COOKIE] ?? '';
+        if (!is_string($cookie) || !preg_match('/^([a-f0-9]{32}):([a-f0-9]{64})$/D', $cookie, $parts)) {
+            if ($cookie !== '') self::clearCookie(self::REMEMBER_COOKIE);
+            return;
+        }
+
+        $stmt = self::$mysql->prepare('SELECT t.user_id, t.token_hash, u.id, u.username, u.email, u.user_role FROM remember_tokens t JOIN users u ON u.id = t.user_id WHERE t.selector = ? AND t.expires_at > NOW() LIMIT 1');
+        $stmt->bind_param('s', $parts[1]);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$row || !hash_equals($row['token_hash'], hash('sha256', $parts[2]))) {
+            self::clearCookie(self::REMEMBER_COOKIE);
+            return;
+        }
+
+        session_regenerate_id(true);
+        $_SESSION['user'] = self::userFromRow($row);
+        $expires = time() + self::REMEMBER_LIFETIME;
+        $stmt = self::$mysql->prepare('UPDATE remember_tokens SET expires_at = FROM_UNIXTIME(?) WHERE selector = ?');
+        $stmt->bind_param('is', $expires, $parts[1]);
+        $stmt->execute();
+        $stmt->close();
+        setcookie(self::REMEMBER_COOKIE, $cookie, self::cookieOptions($expires));
+    }
+
+    private function rememberUser(int $userId): void
+    {
+        $selector = bin2hex(random_bytes(16));
+        $token = bin2hex(random_bytes(32));
+        $hash = hash('sha256', $token);
+        $expires = time() + self::REMEMBER_LIFETIME;
+        $stmt = self::$mysql->prepare('INSERT INTO remember_tokens (selector, user_id, token_hash, expires_at) VALUES (?, ?, ?, FROM_UNIXTIME(?))');
+        $stmt->bind_param('sisi', $selector, $userId, $hash, $expires);
+        $stmt->execute();
+        $stmt->close();
+        setcookie(self::REMEMBER_COOKIE, $selector . ':' . $token, self::cookieOptions($expires));
+    }
+
+    public function forgetRememberedLogin(): void
+    {
+        $cookie = $_COOKIE[self::REMEMBER_COOKIE] ?? '';
+        if (is_string($cookie) && preg_match('/^([a-f0-9]{32}):([a-f0-9]{64})$/D', $cookie, $parts)) {
+            $hash = hash('sha256', $parts[2]);
+            $stmt = self::$mysql->prepare('DELETE FROM remember_tokens WHERE selector = ? AND token_hash = ?');
+            $stmt->bind_param('ss', $parts[1], $hash);
+            $stmt->execute();
+            $stmt->close();
+        }
+        self::clearCookie(self::REMEMBER_COOKIE);
+        self::clearCookie('user');
+    }
+
+    public function login($username, $password, $isAjax = true, $remember = false)
     {
         $username = self::escape($username);
         $password = self::escape($password, true);
@@ -170,21 +255,10 @@ class auth extends database
         {   
             $query = $query->assoc();
 
-            $user = ['username', 'email', 'rank', 'userid'];
-
-            $user['username'] = $query['username'];
-            $user['email'] = $query['email'];
-            $user['rank'] = $query['user_role'];
-            $user['userid'] = $query['id'];
- 
-
-            $_SESSION['user'] = $user;
-
-            $cookieName = "user";
-            $cookieValue = serialize($user);
-            $expirationTime = time() + 10 * 365 * 24 * 60 * 60; // 10 years
-
-            setcookie($cookieName, $cookieValue, $expirationTime, '/');
+            session_regenerate_id(true);
+            $_SESSION['user'] = self::userFromRow($query);
+            $this->forgetRememberedLogin();
+            if ($remember) $this->rememberUser((int)$query['id']);
             
             // latest login update
             

@@ -133,6 +133,24 @@ body {
   margin-top: 25px;
 }
 
+.rememberOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  color: #30405a;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rememberOption input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--blue);
+}
+
 .loginForm .login {
   width: 100%;
   min-height: 54px;

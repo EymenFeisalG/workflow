@@ -23,7 +23,7 @@
                var workflow = true;
     </script>
     <script defer src="ui/js/general.js"></script>
-    <script src="ui/js/app.js?v=2.13"></script>
+    <script src="ui/js/app.js?v=2.14"></script>
     <script src="resources/tinymce/tinymce.min.js"></script>
     <script>
         var Direction = "<?php echo $_GET['dir']; ?>";

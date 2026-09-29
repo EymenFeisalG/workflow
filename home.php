@@ -36,9 +36,9 @@
     <link href="ui/style/css/notificationsFocus.css?v=9" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
-    <script src="ui/js/orderModal.js?v=2.21"></script>
+    <script src="ui/js/orderModal.js?v=2.22"></script>
     <script src="ui/js/macDock.js?v=2.7"></script>
-    <script src="ui/js/app.js?v=2.13"></script>
+    <script src="ui/js/app.js?v=2.14"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
 

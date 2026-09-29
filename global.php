@@ -4,6 +4,12 @@
 use Mailer\Mailer;
 
 
+session_set_cookie_params([
+    'path' => '/',
+    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
 session_start();
 if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 // page settings
@@ -26,7 +32,10 @@ $main = new main($email_settings);
 $auth = new auth($email_settings);
 $taskNotifications = new TaskNotifications(database::$mysql);
 
-if($auth->Maintenance())
+$auth->restoreRememberedLogin();
+if (isset($_SESSION['user'])) $auth->initRights();
+
+if (basename($_SERVER['SCRIPT_NAME'] ?? '') !== 'logout.php' && $auth->Maintenance())
 {
     $url = $_SERVER["REQUEST_URI"]; 
     $pos = strrpos($url, "Maintenance.php"); 

@@ -242,6 +242,8 @@ php bin/migrate.php --up --expected-db=workflow
 
 `schema_migrations` sparar filnamn, kontrollsumma och körningstid i den anslutna databasen. Verktyget kör bara väntande filer, stoppar ändrade eller saknade tidigare filer och kräver att `--expected-db` matchar både konfigurationen och den faktiska anslutningen. Vid fel avbryts körningen. MySQL kan spara en schemaändring även om nästa steg misslyckas; kontrollera därför databasen innan du försöker igen.
 
+Valet **Kom ihåg mig på den här enheten** använder tabellen `remember_tokens` från `20260930_03_remember_tokens.sql`. Inloggningen varar upp till 400 dagar och förnyas när den ihågkomna cookien används. Utloggning återkallar cookien. Om användaren rensar cookies eller inte använder appen inom giltighetstiden behövs en ny inloggning.
+
 Den äldre `20260929_order_contact.sql` är redan manuellt körd lokalt och i produktion. När ett befintligt schema tas i bruk ska man först kontrollera att ändringen finns och sedan registrera just den filen utan att köra den igen:
 
 ```powershell

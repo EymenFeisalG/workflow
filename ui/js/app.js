@@ -15,6 +15,10 @@ $(document).ready(function () {
     let temporaryView = false;
     let workflowSortable = null;
     let isSectionLoading = false;
+    let sectionVersion = 0;
+    let lastOrdersMarkup = null;
+    let lastNavMarkup = null;
+    let liveRequestPending = false;
     window.reloadOrders = function (section) {
         loadSection(section || currentDir, Boolean(section));
     };
@@ -33,6 +37,64 @@ $(document).ready(function () {
     if ($('#notificationBell').length) {
         refreshNotifications();
         window.setInterval(refreshNotifications, 30000);
+    }
+    window.setInterval(refreshLiveTasks, 3000);
+
+    function refreshLiveTasks() {
+        if (document.hidden) return;
+        if (typeof window.loadCreatedOrdersHistory === 'function') window.loadCreatedOrdersHistory();
+        if (isSectionLoading || liveRequestPending) return;
+        const requestedDir = currentDir;
+        const requestedVersion = sectionVersion;
+        liveRequestPending = true;
+        $.ajax({
+            url: 'php/functions/getOrders.php',
+            data: { dir: requestedDir, live: '1' },
+            dataType: 'json',
+            cache: false,
+            timeout: 10000
+        })
+            .done(function (result) {
+                if (!result || requestedDir !== currentDir || requestedVersion !== sectionVersion || isSectionLoading) return;
+
+                if (result.nav !== lastNavMarkup) {
+                    lastNavMarkup = result.nav;
+                    $('#parentStats').replaceWith($(result.nav).filter('#parentStats'));
+                    $('#parentStats [data-url="' + currentDir + '"]').addClass('active');
+                    ['pending', 'rework', 'completed'].forEach(function (dir) {
+                        const count = $('#parentStats [data-url="' + dir + '"] .dockBadge').text().trim() || '0';
+                        $('#dockSubmenuPopover .dockMenuCategory[data-url="' + dir + '"] .dockMobileCategoryCount')
+                            .text(count).attr('aria-label', count + ' uppdrag');
+                    });
+                }
+
+                const markup = (result.orders || '').trim();
+                if (markup === lastOrdersMarkup || $('.searchOrder').val().trim() ||
+                    $('#orderModalOverlay').hasClass('active') || $('.modal:visible, .generalModal:visible, .orders .dragging, .orders .is-saving').length ||
+                    $('.orders .taskThreadPanel').filter(function () { return !this.hidden; }).length ||
+                    $(document.activeElement).is('.orders input, .orders textarea, .orders [contenteditable="true"]')) return;
+
+                const $orders = $('.orders');
+                const scrollTop = $orders.scrollTop();
+                const expandedIds = $orders.find('.order .desc.autoHeight').closest('.order').map(function () {
+                    return $(this).attr('data-orderid');
+                }).get();
+                lastOrdersMarkup = markup;
+                $orders.html(markup === 'empty' || markup === '' || markup === '0' ? getEmptyMessageHtml(currentDir) : markup);
+                addToOrder();
+                expandedIds.forEach(function (id) {
+                    const $order = $orders.find('.order[data-orderid="' + id + '"]');
+                    $order.find('.desc').addClass('autoHeight').removeClass('masked');
+                    $order.find('.readMore').addClass('rotate');
+                });
+                const selectedId = new URLSearchParams(window.location.search).get('orderId');
+                if (selectedId && /^\d+$/.test(selectedId)) {
+                    $orders.find('.order[data-orderid="' + selectedId + '"]').addClass('selectedCreatedOrder');
+                }
+                setupWorkflowSortable(currentDir);
+                $orders.scrollTop(scrollTop);
+            })
+            .always(function () { liveRequestPending = false; });
     }
 
     /* ==========================================================================
@@ -66,6 +128,7 @@ $(document).ready(function () {
         // Prevent redundant simultaneous requests
         if (isSectionLoading && currentDir === sectionUrl) return;
         isSectionLoading = true;
+        const requestVersion = ++sectionVersion;
 
         // Normalize section identifier
         let requestDir = (sectionUrl === 'workflow') ? 'prio' : sectionUrl;
@@ -104,6 +167,7 @@ $(document).ready(function () {
             dataType: 'html',
             cache: false,
             success: function (response) {
+                if (requestVersion !== sectionVersion) return;
                 currentDir = requestDir;
 
                 // Stop blinking animation
@@ -136,6 +200,7 @@ $(document).ready(function () {
 
                 // Render content or empty state
                 let trimmed = (response || '').trim();
+                lastOrdersMarkup = trimmed;
                 if (trimmed === 'empty' || trimmed === '' || trimmed === '0') {
                     $orders.html(getEmptyMessageHtml(requestDir));
                 } else {
@@ -168,13 +233,14 @@ $(document).ready(function () {
                 $orders.scrollTop(0);
             },
             error: function () {
+                if (requestVersion !== sectionVersion) return;
                 $btnText.removeClass('dockTextLoading');
                 $('.dockTabText').removeClass('dockTextLoading');
                 $orders.removeClass('is-loading');
                 message("Kunde inte ladda sektionen. Kontrollera anslutningen.", "Fel");
             },
             complete: function () {
-                isSectionLoading = false;
+                if (requestVersion === sectionVersion) isSectionLoading = false;
             }
         });
     }
