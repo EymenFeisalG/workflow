@@ -186,6 +186,8 @@ För att säkerställa att utvecklare eller projektledare aldrig förlorar text 
 ### 6. Diskussion i uppgifter
 Varje uppgift har en texttråd som kan läsas av skaparen, den nuvarande utföraren och användare med `orders_show_all`. Nya inlägg kan skrivas medan uppgiften är pågående, granskas eller kompletteras. Slutförda och borttagna uppgifter har läsbar historik.
 
+Kommentarer som lämnas vid **Attestera** eller **Komplettera** sparas i samma transaktion som statusändringen och visas i diskussionen med märkningen **Stämplad**. Kör `migrations/20260930_03_task_message_source.sql` innan den här versionen tas i bruk.
+
 `php/functions/taskThread.php` läser sidor om högst 50 inlägg via `GET` (`orderId`, valfritt `beforeId` eller `afterId`). `POST` med CSRF-token använder `action=send` och `body` för nya inlägg eller `action=read` och `messageIds[]` för inlägg som har visats. Varje inlägg och dess notiser sparas i samma databastransaktion. Notiser till skapare och utförare ligger kvar som olästa tills mottagaren öppnar tråden; knappen för att markera övriga notiser som lästa påverkar inte chattinlägg.
 
 ---

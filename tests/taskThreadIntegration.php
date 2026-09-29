@@ -31,6 +31,7 @@ try {
     $testDb->query('ALTER TABLE `query` ENGINE = InnoDB');
     $testDb->query('ALTER TABLE task_notifications ENGINE = InnoDB');
     $testDb->query(file_get_contents(__DIR__ . '/../migrations/20260930_01_task_messages.sql'));
+    $testDb->query(file_get_contents(__DIR__ . '/../migrations/20260930_03_task_message_source.sql'));
     $column = $testDb->query("SHOW COLUMNS FROM task_notifications LIKE 'message_id'");
     if ($column->num_rows === 0) $testDb->query(file_get_contents(__DIR__ . '/../migrations/20260930_02_task_notification_message_id.sql'));
     $testDb->query("INSERT INTO users (id, username, email, password, user_role) VALUES
@@ -47,6 +48,8 @@ try {
     checkThread($first > 0, 'Message was not created');
     checkThread($notifications->listFor(102)['unread'] === 1, 'Worker did not get notification');
     checkThread($notifications->listFor(101)['unread'] === 0, 'Sender got own notification');
+    checkThread(($notifications->listFor(101)['threadTotal']['201'] ?? 0) === 1, 'Creator comment count is incorrect');
+    checkThread(($notifications->listFor(103)['threadTotal']['201'] ?? 0) === 0, 'Unrelated user can see comment count');
     $chatNotificationId = (int)$notifications->listFor(102)['items'][0]['id'];
     $notifications->markRead(102, [$chatNotificationId]);
     checkThread($notifications->listFor(102)['unread'] === 1, 'Notification click cleared thread message');
@@ -55,11 +58,13 @@ try {
     checkThread($notifications->listFor(102)['unread'] === 1, 'Read all did not preserve only the thread notification');
     $page = $thread->page(201, 102, false);
     checkThread(count($page['messages']) === 1 && $page['messages'][0]['id'] === $first, 'Worker cannot see message');
+    checkThread($page['messages'][0]['source'] === 'discussion', 'Ordinary discussion source is incorrect');
     $thread->markViewed(201, 102, false, [$first]);
     checkThread($notifications->listFor(102)['unread'] === 0, 'Viewing message did not clear notification');
 
     $reply = $thread->send(201, 102, false, 'Reply');
     checkThread($reply > $first && $notifications->listFor(101)['unread'] === 1, 'Reply notification failed');
+    checkThread(($notifications->listFor(101)['threadTotal']['201'] ?? 0) === 2, 'Reply did not update comment count');
     try { $thread->page(201, 103, false); throw new RuntimeException('Unrelated user read thread'); }
     catch (DomainException $expected) {}
     try { $thread->send(201, 103, false, 'No access'); throw new RuntimeException('Unrelated user wrote thread'); }

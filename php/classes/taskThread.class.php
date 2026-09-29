@@ -26,13 +26,13 @@ class TaskThread
         $order = $this->accessibleOrder($orderId, $userId, $showAll);
         if ($beforeId > 0 && $afterId > 0) throw new InvalidArgumentException('Välj ett sätt att bläddra.');
         if ($afterId > 0) {
-            $stmt = $this->db->prepare('SELECT m.id, m.author_id, u.username AS author_name, m.body, m.created_at FROM task_messages m JOIN users u ON u.id = m.author_id WHERE m.order_id = ? AND m.id > ? ORDER BY m.id ASC LIMIT 51');
+            $stmt = $this->db->prepare('SELECT m.id, m.author_id, u.username AS author_name, m.body, m.source, m.created_at FROM task_messages m JOIN users u ON u.id = m.author_id WHERE m.order_id = ? AND m.id > ? ORDER BY m.id ASC LIMIT 51');
             $stmt->bind_param('ii', $orderId, $afterId);
         } elseif ($beforeId > 0) {
-            $stmt = $this->db->prepare('SELECT m.id, m.author_id, u.username AS author_name, m.body, m.created_at FROM task_messages m JOIN users u ON u.id = m.author_id WHERE m.order_id = ? AND m.id < ? ORDER BY m.id DESC LIMIT 51');
+            $stmt = $this->db->prepare('SELECT m.id, m.author_id, u.username AS author_name, m.body, m.source, m.created_at FROM task_messages m JOIN users u ON u.id = m.author_id WHERE m.order_id = ? AND m.id < ? ORDER BY m.id DESC LIMIT 51');
             $stmt->bind_param('ii', $orderId, $beforeId);
         } else {
-            $stmt = $this->db->prepare('SELECT m.id, m.author_id, u.username AS author_name, m.body, m.created_at FROM task_messages m JOIN users u ON u.id = m.author_id WHERE m.order_id = ? ORDER BY m.id DESC LIMIT 51');
+            $stmt = $this->db->prepare('SELECT m.id, m.author_id, u.username AS author_name, m.body, m.source, m.created_at FROM task_messages m JOIN users u ON u.id = m.author_id WHERE m.order_id = ? ORDER BY m.id DESC LIMIT 51');
             $stmt->bind_param('i', $orderId);
         }
         $stmt->execute();

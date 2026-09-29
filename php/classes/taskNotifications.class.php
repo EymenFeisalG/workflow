@@ -63,7 +63,12 @@ class TaskNotifications
         $threadCount->execute();
         $threadUnread = [];
         foreach ($threadCount->get_result()->fetch_all(MYSQLI_ASSOC) as $row) $threadUnread[(string)$row['order_id']] = (int)$row['total'];
-        return ['items' => $items, 'unread' => $unread, 'threadUnread' => $threadUnread];
+        $totalCount = $this->db->prepare('SELECT m.order_id, COUNT(*) AS total FROM task_messages m JOIN `query` q ON q.id = m.order_id WHERE ? = 1 OR q.creator = ? OR q.worker_name_id = ? GROUP BY m.order_id');
+        $totalCount->bind_param('iii', $all, $userId, $userId);
+        $totalCount->execute();
+        $threadTotal = [];
+        foreach ($totalCount->get_result()->fetch_all(MYSQLI_ASSOC) as $row) $threadTotal[(string)$row['order_id']] = (int)$row['total'];
+        return ['items' => $items, 'unread' => $unread, 'threadUnread' => $threadUnread, 'threadTotal' => $threadTotal];
     }
 
     public function markRead(int $userId, array $ids = [], bool $all = false): void

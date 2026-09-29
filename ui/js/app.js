@@ -70,7 +70,7 @@ $(document).ready(function () {
 
                 const markup = (result.orders || '').trim();
                 if (markup === lastOrdersMarkup || $('.searchOrder').val().trim() ||
-                    $('#orderModalOverlay').hasClass('active') || $('.modal:visible, .generalModal:visible, .orders .dragging, .orders .is-saving').length ||
+                    $('#orderModalOverlay').hasClass('active') || !$('#decisionModal').prop('hidden') || $('.generalModal:visible, .orders .dragging, .orders .is-saving').length ||
                     $('.orders .taskThreadPanel').filter(function () { return !this.hidden; }).length ||
                     $(document.activeElement).is('.orders input, .orders textarea, .orders [contenteditable="true"]')) return;
 
@@ -398,63 +398,87 @@ $(document).ready(function () {
        4. Attest / Rework Comment Form (.decisionForm)
        ========================================================================== */
 
-    $('.closeDecision').on('click', function (e) {
-        e.preventDefault();
-        $('.modal').hide();
-        $('.decisionForm').hide();
-        $('.decisionForm input[name="orderid"]').val('');
-        $('.decisionForm input[name="action"]').val('');
-        $('.decisionForm textarea[name="comment"]').val('');
+    const $decisionModal = $('#decisionModal');
+    let decisionTrigger = null;
+
+    function closeDecision() {
+        if ($decisionModal.prop('hidden')) return;
+        if ($decisionModal.find('.decisionForm').data('saving')) return;
+        $decisionModal.prop('hidden', true);
+        const $form = $decisionModal.find('.decisionForm');
+        $form[0].reset();
+        $form.find('.orderid, .action').val('');
+        $form.find('.decisionError').text('').prop('hidden', true);
+        if (decisionTrigger && document.contains(decisionTrigger)) decisionTrigger.focus();
+        decisionTrigger = null;
+    }
+
+    function openDecision(trigger, action) {
+        if ($decisionModal.find('.decisionForm').data('saving')) return;
+        const orderId = $(trigger).closest('[data-orderId]').attr('data-orderId');
+        if (!/^\d+$/.test(String(orderId || ''))) return;
+        decisionTrigger = trigger;
+        const isRework = action === 'deny';
+        const $form = $decisionModal.find('.decisionForm');
+        $form[0].reset();
+        $form.find('.orderid').val(orderId);
+        $form.find('.action').val(isRework ? 'deny' : 'attest');
+        $form.find('.modalTitle').text(isRework ? 'Begär komplettering' : 'Attestera uppgift');
+        $form.find('.decisionDescription').text(isRework
+            ? 'Uppgiften skickas tillbaka för komplettering. Beskriv gärna vad som behöver göras.'
+            : 'Uppgiften skickas till granskning. Du kan lämna en kommentar till mottagaren.');
+        $form.find('.saveDecision').text(isRework ? 'Skicka för komplettering' : 'Attestera uppgift');
+        $form.find('.decisionError').text('').prop('hidden', true);
+        $decisionModal.prop('hidden', false);
+        $form.find('.content').trigger('focus');
+    }
+
+    $decisionModal.on('click', '.closeDecision', closeDecision);
+    $decisionModal.on('click', function (event) {
+        if (event.target === this) closeDecision();
+    });
+    $(document).on('keydown', function (event) {
+        if ($decisionModal.prop('hidden')) return;
+        if (event.key === 'Escape') { event.preventDefault(); closeDecision(); }
+        if (event.key !== 'Tab') return;
+        const $controls = $decisionModal.find('button:visible, textarea:visible');
+        const first = $controls[0];
+        const last = $controls[$controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
 
-    $('.saveDecision').on('click', function (e) {
-        e.preventDefault();
-
-        const $form = $('.decisionForm');
+    $decisionModal.on('submit', '.decisionForm', function (event) {
+        event.preventDefault();
+        const $form = $(this);
+        if ($form.data('saving')) return;
+        $form.data('saving', true);
         const targetOrderId = $form.find('.orderid').val();
         const actionType = $form.find('.action').val();
-
-        $.post('php/functions/submitOrderDecision.php', $form.serialize(), function () {
-            if (actionType === 'deny') {
-                message("Uppgiften har skickats för korrigering.", "Kompletteras");
-            } else {
-                message("Uppgiften har godkänts / klarmarkerats.", "Godkänd");
-            }
-
-            $('.modal').hide();
-            $form.hide();
-            $form.find('textarea[name="comment"]').val('');
-            $form.find('.action').val('');
-            $form.find('.orderid').val('');
-
-            if (focusedOrderId === String(targetOrderId)) {
-                closeFocus();
-                $("[data-orderId='" + targetOrderId + "']").remove();
-            } else {
-                $("[data-orderId='" + targetOrderId + "']").slideUp(250);
-            }
-        });
+        const $button = $form.find('.saveDecision');
+        const $error = $form.find('.decisionError').text('').prop('hidden', true);
+        $button.prop('disabled', true).text('Sparar…');
+        $.ajax({ url: 'php/functions/submitOrderDecision.php', method: 'POST', data: $form.serialize(), dataType: 'json' })
+            .done(function (result) {
+                if (!result || !result.success) { $error.text((result && result.error) || 'Beslutet kunde inte sparas.').prop('hidden', false); return; }
+                $form.data('saving', false);
+                closeDecision();
+                message(actionType === 'deny' ? 'Uppgiften har skickats för komplettering.' : 'Uppgiften har skickats till granskning.', actionType === 'deny' ? 'Kompletteras' : 'Attesterad');
+                if (focusedOrderId === String(targetOrderId)) closeFocus();
+                loadSection(currentDir, false);
+                refreshNotifications();
+            })
+            .fail(function (xhr) {
+                $error.text((xhr.responseJSON && xhr.responseJSON.error) || 'Beslutet kunde inte sparas. Försök igen.').prop('hidden', false);
+            })
+            .always(function () {
+                $form.data('saving', false);
+                $button.prop('disabled', false).text(actionType === 'deny' ? 'Skicka för komplettering' : 'Attestera uppgift');
+            });
     });
 
-    // Mark as done button
-    $(document).on('click', '.done', function () {
-        let orderId = $(this).closest('[data-orderId]').attr('data-orderId');
-        $('.decisionForm .modalTitle').text("Meddelande / Kommentar (valfritt)");
-        $('.decisionForm .action').val('');
-        $('.decisionForm .orderid').val(orderId);
-        $('.modal').show();
-        $('.decisionForm').show();
-    });
-
-    // Deny / Request rework
-    $(document).on('click', '.denyOrder', function () {
-        let orderId = $(this).closest('[data-orderId]').attr('data-orderId');
-        $('.decisionForm .modalTitle').text("Vad behöver ändras?");
-        $('.decisionForm .action').val('deny');
-        $('.decisionForm .orderid').val(orderId);
-        $('.modal').show();
-        $('.decisionForm').show();
-    });
+    $(document).on('click', '.done', function () { openDecision(this, 'attest'); });
+    $(document).on('click', '.denyOrder', function () { openDecision(this, 'deny'); });
 
     // Accept order (Approver)
     $(document).on('click', '.acceptOrder', function () {
@@ -528,6 +552,11 @@ $(document).ready(function () {
         const $meta = $('<div class="taskThreadMessageMeta">');
         const date = new Date(String(item.created_at).replace(' ', 'T'));
         $meta.append($('<strong>').text(item.author_name || 'Okänd användare'));
+        if (item.source === 'attest' || item.source === 'rework') {
+            $item.addClass('is-stamped');
+            $meta.append($('<span class="taskThreadStamp">').text('Stämplad').attr('title', item.source === 'attest' ? 'Kommentar från attestering' : 'Kommentar från komplettering'));
+            $meta.append($('<span class="taskThreadStampOrigin">').text(item.source === 'attest' ? 'från attestering' : 'från komplettering'));
+        }
         $meta.append($('<time>').text(Number.isNaN(date.getTime()) ? item.created_at : date.toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })));
         $item.append($meta, $('<p>').text(item.body));
         return $item;
@@ -763,8 +792,14 @@ $(document).ready(function () {
             $('#notificationCount').text(count > 99 ? '99+' : count).prop('hidden', count === 0);
             $('#notificationBell').attr('aria-label', 'Notifikationer, ' + count + ' olästa');
             $('[data-thread-order-id]').each(function () {
-                const unread = Number((result.threadUnread || {})[$(this).attr('data-thread-order-id')] || 0);
-                $(this).find('.taskThreadUnread').text(unread > 99 ? '99+' : unread).prop('hidden', unread === 0);
+                const orderId = $(this).attr('data-thread-order-id');
+                const total = Number((result.threadTotal || {})[orderId] || 0);
+                const unread = Number((result.threadUnread || {})[orderId] || 0);
+                $(this).find('.taskThreadCount').text(total)
+                    .attr('aria-label', total + (total === 1 ? ' kommentar' : ' kommentarer'));
+                $(this).find('.taskThreadUnread').text(unread === 1 ? '1 ny' : unread > 99 ? '99+ nya' : unread + ' nya')
+                    .attr('aria-label', unread + (unread === 1 ? ' oläst kommentar' : ' olästa kommentarer'))
+                    .prop('hidden', unread === 0);
             });
             const groups = new Map();
             (result.items || []).forEach(function (item) {

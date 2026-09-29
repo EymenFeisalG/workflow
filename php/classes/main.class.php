@@ -186,23 +186,41 @@ class main extends database
     public function submitOrderDecision($id, $orderDesc, $action)
     {
         $orderId = (int)$id;
-        $notificationDetail = trim(strip_tags((string)$orderDesc));
-        $orderDesc = self::escape($orderDesc) ?? 'ingen beskrivning...';
+        $comment = trim((string)$orderDesc);
+        if (!in_array($action, ['attest', 'deny'], true)) throw new InvalidArgumentException('Ogiltigt beslut.');
+        if (mb_strlen($comment) > 4000) throw new InvalidArgumentException('Kommentaren får vara högst 4000 tecken.');
 
-        if($action == "deny")
-        {
-            $this->taskTransaction(function () use ($orderId, $orderDesc, $notificationDetail) {
-                self::query("UPDATE query SET `status` = 'rework', messageToDev = '".$orderDesc."' WHERE id = '".$orderId."'");
-                if (self::$mysql->affected_rows > 0) $this->notifyOrder($orderId, 'rework', $notificationDetail);
-            });
-            return;
-        }
-        
-        $this->taskTransaction(function () use ($orderId, $notificationDetail) {
-            self::query("UPDATE query SET `status` = 'pending' WHERE id = '".$orderId."'");
-            if (self::$mysql->affected_rows > 0) $this->notifyOrder($orderId, 'pending', $notificationDetail);
+        $this->taskTransaction(function () use ($orderId, $comment, $action) {
+            $actorId = (int)($_SESSION['user']['userid'] ?? 0);
+            $notifications = $this->notifications();
+            $order = $notifications->order($orderId, true);
+            $allowed = $order && $actorId > 0 && (
+                ($action === 'deny' && $order['status'] === 'pending' && ((int)$order['creator'] === $actorId || $this->hasRight('orders_show_all'))) ||
+                ($action === 'attest' && in_array($order['status'], ['ongoing', 'rework'], true) && (int)$order['worker_name_id'] === $actorId)
+            );
+            if (!$allowed) throw new DomainException('Du får inte ändra uppgiftens status.');
+
+            if ($action === 'deny') {
+                $update = self::$mysql->prepare("UPDATE `query` SET status = 'rework', messageToDev = ? WHERE id = ?");
+                $update->bind_param('si', $comment, $orderId);
+            } else {
+                $update = self::$mysql->prepare("UPDATE `query` SET status = 'pending' WHERE id = ?");
+                $update->bind_param('i', $orderId);
+            }
+            $update->execute();
+            $event = $action === 'deny' ? 'rework' : 'pending';
+            $this->notifyOrder($orderId, $event, mb_substr($comment, 0, 255));
+
+            if ($comment !== '') {
+                $source = $action === 'deny' ? 'rework' : 'attest';
+                $insert = self::$mysql->prepare('INSERT INTO task_messages (order_id, author_id, body, source) VALUES (?, ?, ?, ?)');
+                $insert->bind_param('iiss', $orderId, $actorId, $comment, $source);
+                $insert->execute();
+                $messageId = (int)self::$mysql->insert_id;
+                $notifications->emitTo($orderId, $actorId, 'thread_message', mb_substr($comment, 0, 255),
+                    [(int)$order['creator'], (int)$order['worker_name_id']], $messageId);
+            }
         });
-
     }
 
 
@@ -770,9 +788,17 @@ class main extends database
         $orderId = (int)$order['queryid'];
         $canWrite = in_array($order['status'], ['ongoing', 'rework', 'pending'], true);
         ?>
-        <section class="taskThread" data-thread-order-id="<?php echo $orderId; ?>" aria-label="Diskussion om uppgift <?php echo $orderId; ?>">
+        <section class="taskThread" data-thread-order-id="<?php echo $orderId; ?>" aria-label="Kommentarer om uppgift <?php echo $orderId; ?>">
             <button type="button" class="taskThreadToggle" aria-expanded="false">
-                <span>Diskussion</span><span class="taskThreadUnread" hidden></span><span class="taskThreadChevron" aria-hidden="true">⌄</span>
+                <span class="taskThreadIcon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-8 8 8.8 8.8 0 0 1-3.5-.7L4 20l1.2-4.1A8 8 0 1 1 20 11.5Z"/><path d="M8 11.5h8M8 14.5h5"/></svg>
+                </span>
+                <span class="taskThreadToggleText"><strong>Kommentarer</strong><small><?php echo $canWrite ? 'Visa och skriv kommentarer' : 'Läs kommentarer'; ?></small></span>
+                <span class="taskThreadCount" aria-label="0 kommentarer">0</span>
+                <span class="taskThreadUnread" hidden></span>
+                <span class="taskThreadChevron" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
             </button>
             <div class="taskThreadPanel" hidden>
                 <button type="button" class="taskThreadOlder" hidden>Visa äldre inlägg</button>
@@ -780,8 +806,8 @@ class main extends database
                 <p class="taskThreadStatus" role="status"></p>
                 <?php if ($canWrite): ?>
                 <form class="taskThreadForm">
-                    <label class="taskThreadLabel">Skriv i diskussionen
-                        <textarea class="taskThreadInput" maxlength="4000" rows="3" required placeholder="Vad har gjorts eller behöver diskuteras?"></textarea>
+                    <label class="taskThreadLabel">Skriv en kommentar
+                        <textarea class="taskThreadInput" maxlength="4000" rows="3" required placeholder="Skriv din kommentar här…"></textarea>
                     </label>
                     <button type="submit" class="taskThreadSend">Skicka</button>
                 </form>

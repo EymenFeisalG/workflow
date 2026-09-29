@@ -18,7 +18,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="ui/style/css/app.css?v=2.12" rel="stylesheet">
+    <link href="ui/style/css/app.css?v=2.13" rel="stylesheet">
+    <link href="ui/style/css/decisionModal.css?v=1" rel="stylesheet">
     <script>
         workflow = false;
         var Direction = "<?php echo $_GET['dir']; ?>";
@@ -33,12 +34,12 @@
     <link href="ui/style/css/general.css" rel="stylesheet">
     <link href="ui/style/css/orderModal.css?v=3.10" rel="stylesheet">
     <link href="ui/style/css/macDock.css?v=3.7" rel="stylesheet">
-    <link href="ui/style/css/notificationsFocus.css?v=9" rel="stylesheet">
+    <link href="ui/style/css/notificationsFocus.css?v=12" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
     <script src="ui/js/orderModal.js?v=2.22"></script>
     <script src="ui/js/macDock.js?v=2.7"></script>
-    <script src="ui/js/app.js?v=2.14"></script>
+    <script src="ui/js/app.js?v=2.16"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
 
@@ -263,15 +264,25 @@
             <div class="focusContent" id="focusContent"></div>
         </div>
     </div>
-        <div class="modal">
-            <form class="decisionForm" method="post">
+        <div class="decisionModal" id="decisionModal" hidden>
+            <form class="decisionForm" method="post" role="dialog" aria-modal="true" aria-labelledby="decisionTitle" aria-describedby="decisionDescription">
                 <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
-                <input type="text" name="orderid" class="orderid" value="" hidden>
-                <input type="text" name="action" class="action" value="" hidden>
-                <h5 class="modalTitle">Meddelande / Kommentar (valfritt)</h5>
-                <textarea class="content" name="comment"></textarea>
-                <input type="submit" value="Spara" class="saveDecision">
-                <input type="button" class="closeDecision close" value="Ångra">
+                <input type="hidden" name="orderid" class="orderid" value="">
+                <input type="hidden" name="action" class="action" value="">
+                <div class="decisionHeader">
+                    <span class="decisionEyebrow">Uppgiftsbeslut</span>
+                    <button type="button" class="closeDecision decisionClose" aria-label="Stäng dialogen">✕</button>
+                </div>
+                <h2 id="decisionTitle" class="modalTitle">Attestera uppgift</h2>
+                <p id="decisionDescription" class="decisionDescription"></p>
+                <label class="decisionLabel" for="decisionComment">Kommentar <span>(valfritt)</span></label>
+                <textarea id="decisionComment" class="content" name="comment" maxlength="4000" rows="5" placeholder="Skriv en kommentar om du vill..."></textarea>
+                <p class="decisionHint">Kommentaren visas i diskussionen med märkningen <strong>Stämplad</strong>.</p>
+                <p class="decisionError" role="alert" hidden></p>
+                <div class="decisionActions">
+                    <button type="button" class="closeDecision decisionCancel">Avbryt</button>
+                    <button type="submit" class="saveDecision">Attestera uppgift</button>
+                </div>
             </form>
         </div>
 
