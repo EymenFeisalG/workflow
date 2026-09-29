@@ -30,8 +30,11 @@ jobs:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR }}
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_USER: ${{ vars.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
         run: |
-          for name in FTP_SERVER FTP_USERNAME FTP_PASSWORD FTP_SERVER_DIR; do
+          for name in FTP_SERVER FTP_USERNAME FTP_PASSWORD FTP_SERVER_DIR DB_HOST DB_USER DB_PASS; do
             if [ -z "${!name}" ]; then
               echo "Missing deployment setting: $name" >&2
               exit 1
@@ -52,6 +55,18 @@ jobs:
             fi
           done
 
+      - name: Install MySQL support for PHP CLI
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq php8.3-cli php8.3-mysql
+
+      - name: Apply pending production database migrations
+        env:
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_USER: ${{ vars.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          DB_NAME: xlfood_se_db_workflow
+          DB_PORT: '3306'
+        run: php bin/migrate.php --up --expected-db=xlfood_se_db_workflow
+
       - name: Upload committed application files
         uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
@@ -69,6 +84,7 @@ jobs:
             **/.github/**
             **/.env*
             **/DEBUG/**
+            **/bin/**
             **/migrations/**
             **/media/**
             **/README.md
