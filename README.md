@@ -1,4 +1,54 @@
+## Centralens header och chatt i Workflow – 2026-10-25
+
+Workflows inloggade arbetsvyer återanvänder Centralens profil, sidheader,
+kontopalett och privata chatt. Menybakgrunden går i full bredd med centrerade
+kontroller. Uppgifter och rättigheter ägs fortsatt av Workflow.
+Profil och ärendekontext länkar till Centralen. Separata cookies/CSRF och
+signerad serverproxy används; inga inloggningshemligheter finns i frontend.
+Se docs/centralen-integration.md och Centralens lokala verifieringsrapport
+DEBUG/tests/workflow-shared-shell-20261025.md. Inget publicerat.
+
+## Direkt tillgång för Centralens användare – 2026-10-25
+
+Alla aktiva, verifierade Centralenkonton går direkt till Workflow utan
+profilval eller krav på äldre Workflowlösenord. Matchande namn/e-post
+blockerar inte och överför inga äldre administratörsrättigheter. Nya profiler
+får roll 1 och add_new_order. Befintliga uttryckliga kopplingar respekteras;
+frivillig äldre kontokoppling finns separat via action=link-start.
+Verifierat isolerat: 119 server-/CGI-kontroller och 8 browserprov PASS.
+Ingen ny SQL-migration eller ändring av verksamhetsdata i detta paket.
+
+## Lokal aktivering enligt användarbeslut – 2026-10-24
+
+Använd endast Centralens konton och skapa vanliga Workflowprofiler automatiskt.
+Kopplingen är nu aktiverad endast lokalt mot centralen.core_users efter
+verifierade fullbackups/restore/hash/rollback. Två engineALTER och fyra
+integrationstabeller är applicerade; alla422 gamlaWorkflowposter bevarade.
+Gamla Workflowkonton importeras inte. HistoriskaID kräver bevisad koppling;
+nya profiler får roll1 och add_new_order, aldrig automatisk adminåtkomst.
+Privata.env är backupade och konfigureringen är inte lagrad iGit.
+Rootbevis: Centralens DEBUG/tests/workflow-integration-20261024.md.
+112 server-/CGI-kontroller och8browserprov PASS. Ingen extern publicering.
+
 # Workflow
+
+## Gemensam identitet och uppgifter från Centralen – 2026-10-24
+
+Den lokala integrationen använder endast Centralens gemensamma `core_users`
+för inloggningsidentitet och kontostatus. Workflow behåller sina egna uppgifter,
+diskussioner, notifieringar, heltalsreferenser och rättigheter. Vanliga medarbetarprofiler skapas automatiskt när funktionen är aktiverad,
+med endast standardrättigheten att skapa uppgifter. Befintlig historik kan
+återknytas efter bevisad inloggning i båda systemen; ingen automatisk
+e-postmatchning, lösenordskopiering eller administratörstilldelning görs.
+Gamla Workflowkonton importeras inte till Centralen.
+
+Centralens chatt kan skapa riktiga Workflowuppgifter genom ett serverbundet,
+signerat API. Uppgift, delmoment, notifiering och återförsökskvittens sparas i
+samma transaktion. Fullt kontrakt, aktivering och isolerade prov finns i
+[docs/centralen-integration.md](docs/centralen-integration.md).
+
+Lokal aktivering och privata inställningar samordnas med Centralen. Ingen
+produktionspublicering ingår i implementationen.
 
 Ett snabbt, modulärt och responsivt ärende- och uppgiftshanteringssystem byggt i PHP och MySQL. Systemet är utformat för digitala byråer och företag för att hantera uppdrag, kontaktpersoner, checklistor, tidsrapportering och medarbetartilldelning i realtid.
 

@@ -8,6 +8,7 @@
 
    require 'global.php';
 
+   if (CentralenIdentity::enabled()) { header('Location: centralen-login.php?action=start'); exit; }
    $auth->userLoginCheck();
 
    $registerError = '';

@@ -312,7 +312,7 @@
             if (!raw) return null;
             const w = JSON.parse(raw);
             if (w && w.id && parseInt(w.id, 10) !== currentUserId) {
-                return w;
+                return window.WorkflowSharedUsers ? (teamWorkers.find(worker => parseInt(worker.id, 10) === parseInt(w.id, 10)) || null) : w;
             }
         } catch (e) {}
         return null;
@@ -455,6 +455,7 @@
                 if (res && res.success && res.workers) {
                     teamWorkers = res.workers;
                     renderDelegationList();
+                    updateLastDelegatedChip();
                 }
             });
         }
@@ -975,6 +976,10 @@
             if (orderTitle === '') {
                 alert('Vänligen ange uppgiftens namn.');
                 $('#orderTitle').focus();
+                return;
+            }
+            if (window.WorkflowSharedUsers && selectedWorkerId !== currentUserId && !teamWorkers.some(worker => parseInt(worker.id, 10) === selectedWorkerId)) {
+                pageAlert('Välj mottagare', 'Den tidigare mottagaren är inte tillgänglig. Välj en aktuell kollega innan du sparar.');
                 return;
             }
             const companyName = $('#orderCompanyName').val().trim();

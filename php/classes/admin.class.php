@@ -65,6 +65,7 @@ class admin extends database
 
    public function addUser($username, $email, $role)
    {
+        if (class_exists('CentralenIdentity') && CentralenIdentity::enabled()) return 'CENTRALEN_USERS';
         $username = trim((string)$username);
         $email = trim((string)$email);
         // check if fields are empty

@@ -8,12 +8,13 @@ class database
     {
         if(self::$mysql == null)
         {
-            self::$mysql = new mysqli($mysql_settings['host'], $mysql_settings['mysql_user'], $mysql_settings['mysql_password'], $mysql_settings['mysql_database']);
+            self::$mysql = new mysqli($mysql_settings['host'], $mysql_settings['mysql_user'], $mysql_settings['mysql_password'], $mysql_settings['mysql_database'], (int)($mysql_settings['port'] ?? 3306));
 
             if(self::$mysql->connect_errno)
             {
                 die('<h1>Felaktiga mysql uppgifter</h1>');
             }
+            self::$mysql->set_charset('utf8mb4');
         }
     }
 

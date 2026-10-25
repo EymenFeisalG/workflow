@@ -11,10 +11,11 @@
 
    $_GET['dir'] = $dir = $auth->setDir();
 
+require __DIR__.'/php/includes/centralen-shell-head.php';
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= centralenShellEscape($centralenShellData['locale'] ?? 'en') ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,9 +27,10 @@
         var WorkflowCsrf = <?php echo json_encode($_SESSION['csrf_token']); ?>;
         var CurrentUser = {
             id: <?php echo (int)($_SESSION['user']['userid'] ?? 1); ?>,
-            username: "<?php echo addslashes($_SESSION['user']['username'] ?? ''); ?>",
+            username: <?php echo json_encode($_SESSION['user']['username'] ?? '', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>,
             role: <?php echo (int)($_SESSION['user']['user_role'] ?? 1); ?>
         };
+        var WorkflowSharedUsers = <?php echo CentralenIdentity::enabled() ? 'true' : 'false'; ?>;
         var TeamWorkers = <?php echo json_encode($main->getWorkersList(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
     </script>
     <link href="ui/style/css/general.css" rel="stylesheet">
@@ -37,7 +39,7 @@
     <link href="ui/style/css/notificationsFocus.css?v=12" rel="stylesheet">
     <script src="ui/js/jquery.js"></script>
     <script src="ui/js/general.js"></script>
-    <script src="ui/js/orderModal.js?v=2.22"></script>
+    <script src="ui/js/orderModal.js?v=20261024-centralen-users1"></script>
     <script src="ui/js/macDock.js?v=2.7"></script>
     <script src="ui/js/app.js?v=2.16"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -45,8 +47,10 @@
 
 
     <title>Workflow</title>
+<?php centralenShellHead(); ?>
 </head>
-<body>
+<body class="<?= $centralenShellEnabled ? 'app-shell centralen-workflow-shell' : '' ?>"<?= centralenShellBodyAttributes() ?>>
+<?php require __DIR__.'/php/includes/centralen-shell-header.php'; ?>
 
 <div class="container">
 
@@ -119,7 +123,7 @@
                 <div class="dockSubmenuInner">
                     <div class="dockSubmenuHeader">
                         <div class="dockSubmenuUserAvatar">
-                            <?php echo strtoupper(substr($_SESSION['user']['username'] ?? 'U', 0, 2)); ?>
+                            <?php echo htmlspecialchars(mb_strtoupper(mb_substr((string)($_SESSION['user']['username'] ?? 'U'), 0, 2, 'UTF-8'), 'UTF-8'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>
                         </div>
                         <div class="dockSubmenuUserInfo">
                             <span class="dockSubmenuUsername"><?php echo htmlspecialchars($_SESSION['user']['username'] ?? ''); ?></span>

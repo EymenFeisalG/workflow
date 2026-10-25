@@ -11,9 +11,10 @@ if (!$auth->hasRight('admin')) {
     header('Location: ../home.php');
     exit;
 }
+require __DIR__.'/../php/includes/centralen-shell-head.php';
 ?>
 <!doctype html>
-<html lang="sv">
+<html lang="<?= centralenShellEscape($centralenShellData['locale'] ?? 'sv') ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,8 +22,10 @@ if (!$auth->hasRight('admin')) {
     <link rel="stylesheet" href="../ui/style/css/admin.css?v=1">
     <script src="../ui/js/jquery.js" defer></script>
     <script src="../ui/js/admin.js?v=1" defer></script>
+<?php centralenShellHead(); ?>
 </head>
-<body>
+<body class="<?= $centralenShellEnabled ? 'app-shell centralen-workflow-shell' : '' ?>"<?= centralenShellBodyAttributes() ?>>
+<?php require __DIR__.'/../php/includes/centralen-shell-header.php'; ?>
     <div class="adminShell">
         <aside class="adminSidebar">
             <a class="brand" href="../home.php"><span class="brandMark">W</span><span>Workflow<small>Administration</small></span></a>
@@ -32,7 +35,7 @@ if (!$auth->hasRight('admin')) {
         <main class="adminMain">
             <header class="topbar"><a href="../home.php" class="mobileBrand">Workflow</a><a href="../home.php">← Till arbetsytan</a></header>
             <div class="pageContent">
-                <div class="pageHeading"><div><p class="eyebrow">Administration</p><h1>Användare</h1><p class="intro">Bjud in kollegor och styr vad de kan göra i Workflow.</p></div><button type="button" class="button primary" id="showInvite">+ Lägg till användare</button></div>
+                <div class="pageHeading"><div><p class="eyebrow">Administration</p><h1>Användare</h1><p class="intro"><?= CentralenIdentity::enabled() ? 'Styr vad kollegorna kan göra i Workflow.' : 'Bjud in kollegor och styr vad de kan göra i Workflow.' ?></p></div><?php if (CentralenIdentity::enabled()): ?><a class="button primary" href="<?= htmlspecialchars(CentralenIdentity::url('CENTRALEN_URL').'/?page=admin&section=staff', ENT_QUOTES|ENT_SUBSTITUTE, 'UTF-8') ?>">Hantera konton i Centralen</a><?php else: ?><button type="button" class="button primary" id="showInvite">+ Lägg till användare</button><?php endif; ?></div>
                 <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
                 <section class="summary" aria-label="Översikt"><div><span>Aktiva konton</span><strong id="activeCount">–</strong></div><div><span>Väntar på aktivering</span><strong id="pendingCount">–</strong></div></section>
                 <section class="panel"><div class="panelHeading"><div><h2>Alla användare</h2><p>Välj en användare för att ändra rättigheter.</p></div><label class="searchLabel"><span class="srOnly">Sök användare</span><input id="userSearch" type="search" placeholder="Sök namn eller e-post"></label></div><div id="userList" class="userList"><p class="emptyState">Läser in användare…</p></div></section>

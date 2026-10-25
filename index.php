@@ -35,6 +35,10 @@
     <main class="loginHolder">
         <section class="loginForm" aria-labelledby="login-title">
             <p class="eyebrow">Workflow</p>
+            <?php if (CentralenIdentity::enabled()): ?>
+            <h1 id="login-title">Logga in</h1>
+            <a class="login centralen-login-link" href="centralen-login.php?action=start">Logga in med Centralen</a>
+            <?php else: ?>
             <form method="post">
                 <div class="fieldGroup">
                     <label for="username">Användarnamn eller e-post</label>
@@ -53,6 +57,7 @@
                 </div>
                 <div class="forgotPassword"><a href="register.php">Skapa ett konto</a></div>
             </form>
+            <?php endif; ?>
         </section>
     </main>
 

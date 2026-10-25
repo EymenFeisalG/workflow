@@ -66,7 +66,7 @@ $(function () {
         const $submit = $(this).find('[type=submit]').prop('disabled', true);
         $.post('functions/addUser.php', $(this).serialize() + '&csrf_token=' + encodeURIComponent(window.AdminCsrf), null, 'json')
             .done(data => { this.reset(); document.getElementById('inviteDialog').close(); notify('Inbjudan skapad. Aktiveringskod: ' + data.code + '. Kontrollera e-postleveransen.'); loadUsers(); })
-            .fail(xhr => { const errors = { USER_TAKEN: 'Användarnamnet eller e-postadressen används redan.', USER_PENDING: 'En inbjudan väntar redan på aktivering.', FIELDS_EMPTY: 'Fyll i alla fält.', INVALID_INPUT: 'Kontrollera e-postadress och roll.' }; notify(errors[xhr.responseJSON?.status] || 'Kunde inte skapa användaren.', true); })
+            .fail(xhr => { const errors = { CENTRALEN_USERS: 'Konton hanteras i Centralen.', USER_TAKEN: 'Användarnamnet eller e-postadressen används redan.', USER_PENDING: 'En inbjudan väntar redan på aktivering.', FIELDS_EMPTY: 'Fyll i alla fält.', INVALID_INPUT: 'Kontrollera e-postadress och roll.' }; notify(errors[xhr.responseJSON?.status] || 'Kunde inte skapa användaren.', true); })
             .always(() => $submit.prop('disabled', false));
     });
     $('#rightsForm').on('submit', function (event) {

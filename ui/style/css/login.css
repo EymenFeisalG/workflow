@@ -214,3 +214,9 @@ body {
     padding: 38px 38px 32px;
   }
 }
+
+.loginForm .centralen-login-link {display:block;margin-top:20px;text-align:center;text-decoration:none;}
+
+.loginForm .centralen-login-return {display:inline-block;min-height:44px;margin-top:12px;padding-block:12px;}
+
+.loginForm .centralen-new-profile {width:100%;min-height:44px;margin-top:16px;padding:12px;border:1px solid var(--blue);border-radius:8px;background:transparent;color:var(--blue-dark);font:inherit;cursor:pointer;}

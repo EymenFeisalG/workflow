@@ -102,9 +102,9 @@ class main extends database
         return new TaskNotifications(self::$mysql);
     }
 
-    private function notifyOrder(int $orderId, string $event, string $detail = '', array $extra = []): void
+    private function notifyOrder(int $orderId, string $event, string $detail = '', array $extra = [], ?int $actorId = null): void
     {
-        $this->notifications()->emit($orderId, (int)($_SESSION['user']['userid'] ?? 0), $event, $detail, $extra);
+        $this->notifications()->emit($orderId, $actorId ?? (int)($_SESSION['user']['userid'] ?? 0), $event, $detail, $extra);
     }
 
     private function taskTransaction(callable $operation)
@@ -448,7 +448,7 @@ class main extends database
            
            <div class="info">
                 <div class="order_desc">
-                    <input type="text" value="<?php echo $skriv['Name']; ?>" class="nameEdit">
+                    <input type="text" value="<?php echo htmlspecialchars($skriv['Name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>" class="nameEdit">
                     <h5 class="name"><?php echo '<span class="orderId"># '.$skriv['queryid'].'</span> '. htmlspecialchars($skriv['Name'], ENT_QUOTES, 'UTF-8'); ?></h5>
                     </div> 
 
@@ -665,7 +665,7 @@ class main extends database
            
            <div class="info">
                 <div class="order_desc">
-                    <input type="text" value="<?php echo $skriv['Name']; ?>" class="nameEdit">
+                    <input type="text" value="<?php echo htmlspecialchars($skriv['Name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>" class="nameEdit">
                     <h5 class="name"><?php echo '<span class="orderId"># '.$skriv['queryid'].'</span> '. htmlspecialchars($skriv['Name'], ENT_QUOTES, 'UTF-8'); ?></h5>
                     </div> 
 
@@ -947,6 +947,7 @@ class main extends database
 
     public function getWorkersList()
     {
+        if (class_exists('CentralenIdentity') && CentralenIdentity::enabled()) return CentralenIdentity::connect(self::$mysql)->workers();
         $myId = (int)($_SESSION['user']['userid'] ?? 0);
         $workers = [];
         $data = self::query("SELECT id, username, email, user_role FROM users ORDER BY username ASC");
@@ -1093,9 +1094,9 @@ class main extends database
         echo '</details>';
     }
 
-    public function createOrderUnified($data, $files = null)
+    public function createOrderUnified($data, $files = null, ?array $integration = null)
     {
-        $creator = (int)($_SESSION['user']['userid'] ?? 0);
+        $creator = (int)($integration['actor_local_id'] ?? $_SESSION['user']['userid'] ?? 0);
         $title   = trim($data['order_title'] ?? '');
         $company = trim($data['company_name'] ?? '');
         $domain  = trim($data['company_domain'] ?? '');
@@ -1112,6 +1113,9 @@ class main extends database
         if ($title === '') {
             return ['success' => false, 'error' => 'Uppgiftens namn är obligatoriskt.'];
         }
+        if ($integration === null && class_exists('CentralenIdentity') && CentralenIdentity::enabled() && !CentralenIdentity::connect(self::$mysql)->forLocal($worker)) {
+            return ['success'=>false,'error'=>'Mottagaren behöver ett aktivt konto i Centralen.'];
+        }
 
         if ($domain !== '') {
             $domain = $this->formatDomain($domain);
@@ -1121,6 +1125,19 @@ class main extends database
         $createdImageDirectory = null;
         try {
             self::$mysql->begin_transaction();
+            if ($integration !== null) {
+                $owner = bin2hex(random_bytes(32));
+                $stmt = self::$mysql->prepare('INSERT INTO workflow_task_operations(request_id,actor_id,intent_hash,owner_token,created_at) VALUES(?,?,?,?,UTC_TIMESTAMP()) ON DUPLICATE KEY UPDATE request_id=request_id');
+                $stmt->bind_param('ssss', $integration['request_id'], $integration['actor_id'], $integration['intent_hash'], $owner);$stmt->execute();
+                $stmt = self::$mysql->prepare('SELECT actor_id,intent_hash,owner_token,result FROM workflow_task_operations WHERE request_id=? FOR UPDATE');
+                $stmt->bind_param('s', $integration['request_id']);$stmt->execute();$operation=$stmt->get_result()->fetch_assoc();
+                if (!$operation || $operation['actor_id'] !== $integration['actor_id'] || !hash_equals($operation['intent_hash'], $integration['intent_hash'])) throw new DomainException('Begäran har redan använts för andra uppgifter.',409);
+                if ($operation['result'] !== null) {
+                    $previous=json_decode($operation['result'],true,32,JSON_THROW_ON_ERROR);self::$mysql->commit();
+                    return ['success'=>true,'orderId'=>$previous['id'],'order_id'=>$previous['id'],'integration_result'=>$previous];
+                }
+                if (!hash_equals($operation['owner_token'],$owner)) throw new RuntimeException('An earlier task operation has no result');
+            }
 
         // 1. Spara namngivna kontaktpersoner så att de kan väljas på fler uppgifter.
         if ($company !== '') {
@@ -1248,11 +1265,17 @@ class main extends database
             }
         }
 
-        $this->notifyOrder($orderId, 'assigned');
-
+        $this->notifyOrder($orderId, 'assigned', '', [], $creator);
+        $result = ['success' => true, 'orderId' => $orderId, 'order_id' => $orderId];
+        if ($integration !== null) {
+            $response=['id'=>$orderId,'title'=>$title,'url'=>$integration['workflow_url'].'/order.php?id='.$orderId,'recipient'=>['id'=>$integration['recipient_id'],'name'=>$integration['recipient_name']]];
+            $json=json_encode($response,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE);
+            $stmt=self::$mysql->prepare('UPDATE workflow_task_operations SET result=? WHERE request_id=?');$stmt->bind_param('ss',$json,$integration['request_id']);$stmt->execute();
+            $result['integration_result']=$response;
+        }
             self::$mysql->commit();
 
-        return ['success' => true, 'orderId' => $orderId, 'order_id' => $orderId];
+        return $result;
         } catch (Throwable $error) {
             self::$mysql->rollback();
             foreach ($movedFiles as $file) {
@@ -1261,6 +1284,7 @@ class main extends database
             if ($createdImageDirectory !== null && is_dir($createdImageDirectory)) {
                 rmdir($createdImageDirectory);
             }
+            if ($integration !== null && $error instanceof DomainException) throw $error;
             error_log('Task creation failed (' . get_class($error) . ', code ' . $error->getCode() . ')');
             return ['success' => false, 'error' => 'Kunde inte skapa uppgiften. Försök igen.'];
         }

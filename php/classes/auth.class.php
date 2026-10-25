@@ -189,6 +189,10 @@ class auth extends database
 
     public function restoreRememberedLogin(): void
     {
+        if (class_exists('CentralenIdentity') && CentralenIdentity::enabled()) {
+            if (!empty($_COOKIE[self::REMEMBER_COOKIE])) $this->forgetRememberedLogin();
+            return;
+        }
         if (isset($_SESSION['user'])) return;
 
         $cookie = $_COOKIE[self::REMEMBER_COOKIE] ?? '';
@@ -246,6 +250,10 @@ class auth extends database
 
     public function login($username, $password, $isAjax = true, $remember = false)
     {
+        if (class_exists('CentralenIdentity') && CentralenIdentity::enabled()) {
+            if ($isAjax) echo 'centralen';
+            return false;
+        }
         $username = self::escape($username);
         $password = self::escape($password, true);
 
@@ -277,7 +285,8 @@ class auth extends database
     }
 
     public function register($seckey, $password, $cpassword)
-    {  
+    {
+        if (class_exists('CentralenIdentity') && CentralenIdentity::enabled()) throw new DomainException('Konton skapas i Centralen.');
 
         $seckey = self::escape($seckey);
         $rawPassword = self::escape($password);

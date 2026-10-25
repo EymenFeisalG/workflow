@@ -71,6 +71,7 @@ if (!function_exists('env')) {
 /* Host & database settings */
 $mysql_settings = [
     'host'           => env('DB_HOST', 'localhost'),
+    'port'           => (int) env('DB_PORT', 3306),
     'mysql_user'     => env('DB_USER', 'root'),
     'mysql_database' => env('DB_NAME', 'workflow'),
     'mysql_password' => env('DB_PASS', '')

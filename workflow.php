@@ -7,10 +7,11 @@
 
    $_GET['dir'] = $dir = $auth->setDir();
 
+require __DIR__.'/php/includes/centralen-shell-head.php';
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= centralenShellEscape($centralenShellData['locale'] ?? 'en') ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -66,8 +67,10 @@
 
 
     <title>Workflow: Prioritering</title>
+<?php centralenShellHead(); ?>
 </head>
-<body class="workflowPage">
+<body class="workflowPage <?= $centralenShellEnabled ? 'app-shell centralen-workflow-shell' : '' ?>"<?= centralenShellBodyAttributes() ?>>
+<?php require __DIR__.'/php/includes/centralen-shell-header.php'; ?>
 
 <div class="workflowNotificationDock">
     <button type="button" class="notificationBell" id="notificationBell" aria-label="Notifikationer" aria-expanded="false" aria-controls="notificationPopover" title="Notifikationer">
